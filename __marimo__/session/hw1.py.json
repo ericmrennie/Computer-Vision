@@ -1,0 +1,372 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.25.1",
+    "script_metadata_hash": null
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "0de92b28a2ff397934811d1688185122",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "cfad8e3bed9382fcbefe70c864dea3c6",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "b58d587ab42e33b079271cb4e6917cbc",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "6a9438b0583aec5b48b74aeacf2d22d2",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"homework-1\">Homework 1</h1>\n<h2 id=\"editing\">Editing</h2>\n<span class=\"paragraph\">Marimo notebooks are just Python files, where each \"cell\" is a function. You can either edit here, in <a href=\"https://molab.marimo.io/\" rel=\"noopener noreferrer\" target=\"_blank\">Molab</a>, or directly in Python.</span>\n<h3 id=\"option-1-molab-recommended\">Option 1 - Molab [Recommended]</h3>\n<span class=\"paragraph\">This is the most recommended option. Take this notebook (.py file), upload it to Molab, and start working. Once you are finished making your edits, click \"Export\" and select \"Python\" to export it as a notebook source.</span>\n<h3 id=\"option-2-local-marimo\">Option 2 - Local Marimo</h3>\n<span class=\"paragraph\">To work locally, first create a python project and place this file <code>hw1.py</code> within it. Then, install marimo using your favorite package manager (<code>uv add marimo</code>). Finally, launch this notebook by typing in your terminal <code>uv run marimo edit</code> and a new tab should open in your browser.</span>\n<h3 id=\"option-3-regular-python-not-recommended\">Option 3 - Regular Python [Not Recommended]</h3>\n<span class=\"paragraph\">It is theoretically possible to edit the <code>.py</code> file directly (although we don't recommend it). If you choose this route, make sure that your Python/Markdown renders properly in Marimo.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "3a66da24d3862dc8c2b28d632e41676e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"problem-1-image-convolution-and-edge-detection\">Problem 1: Image Convolution and Edge Detection</h1>\n<span class=\"paragraph\">You are given the following two images <marimo-tex class=\"arithmatex\">||(I_1||)</marimo-tex> and <marimo-tex class=\"arithmatex\">||(I_2||)</marimo-tex>, with three convolution kernels <marimo-tex class=\"arithmatex\">||(S_x||)</marimo-tex>, <marimo-tex class=\"arithmatex\">||(S_y||)</marimo-tex> and <marimo-tex class=\"arithmatex\">||(L||)</marimo-tex>. [.] indicates the origin of each image.</span>\n<marimo-tex class=\"arithmatex\">||[\nI_1 = \\begin{bmatrix}\n[1] &amp; 1 &amp; 1 \\\\\n3 &amp; 3 &amp; 3 \\\\\n6 &amp; 6 &amp; 6\n\\end{bmatrix}\n\\qquad\nI_2 = \\begin{bmatrix}\n[10] &amp; 10 &amp; 10 \\\\\n10 &amp; 100 &amp; 100 \\\\\n10 &amp; 100 &amp; 100\n\\end{bmatrix}\n||]</marimo-tex><marimo-tex class=\"arithmatex\">||[\nS_x = \\begin{bmatrix}-1 &amp; 0 &amp; 1 \\\\ -2 &amp; [0] &amp; 2 \\\\ -1 &amp; 0 &amp; 1\\end{bmatrix}\n\\qquad\nS_y = \\begin{bmatrix}-1 &amp; -2 &amp; -1 \\\\ 0 &amp; [0] &amp; 0 \\\\ 1 &amp; 2 &amp; 1\\end{bmatrix}\n\\qquad\nL = \\begin{bmatrix}0 &amp; 1 &amp; 0 \\\\ 1 &amp; [-4] &amp; 1 \\\\ 0 &amp; 1 &amp; 0\\end{bmatrix}\n||]</marimo-tex></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "01d10a7da7e2baa932602d1658fc4d25",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "b13cce1d243d079eeb34f001f6aa9008",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"1a-sobel-x-and-sobel-y-by-hand\">1(a) Sobel X and Sobel Y By Hand</h2>\n<span class=\"paragraph\">Compute the full linear convolutions <marimo-tex class=\"arithmatex\">||(S_x * I_1||)</marimo-tex> and <marimo-tex class=\"arithmatex\">||(S_y * I_1||)</marimo-tex> <strong>by hand</strong>, where <marimo-tex class=\"arithmatex\">||(*||)</marimo-tex> denotes linear convolution. Mark the origin in each output matrix. Use the two responses to locate the edges, and explain your reasoning.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "3eb2d5116b21430bd604f5651da7eb58",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Your response to 1(a)</span>\n<span class=\"paragraph\"><em>Double-click this cell to write your answer. You may replace everything here.</em></span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "19775752957fb100fb1d2020cacbe693",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"1b-laplacian-by-hand\">1(b) Laplacian By Hand</h2>\n<span class=\"paragraph\">Compute the full linear convolution <marimo-tex class=\"arithmatex\">||(L * I_2||)</marimo-tex> <strong>by hand</strong>. Mark the origin in the output matrix. Use the response to locate any corner(s), and explain your reasoning.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "0bc07369f4dcdd13aedf79206bacdaca",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Your response to 1(b)</span>\n<span class=\"paragraph\"><em>Double-click this cell to write your answer. You may replace everything here.</em></span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "1ef08798544f5bd4c286a0dbfd33c6bf",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"1c-verify-in-python\">1(c) Verify in Python</h2>\n<span class=\"paragraph\">Complete the two code cells below. The function must perform full 2D linear convolution without calling a library convolution routine (you may not use any numpy functions).</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "69e56da4431274affe0625581901c59a",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "e1fe210dd8364d9003a3e911966b6934",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "nWHF",
+      "code_hash": "de8cfb9fbc2ca6af6b8b1a1934a41311",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h3 id=\"test-your-convolution-on-a-real-image\">Test Your Convolution on a Real Image</h3>\n<span class=\"paragraph\">The next cell downloads a photograph, converts it to grayscale, and runs your convolution function with both Sobel kernels. It displays the input, the horizontal and vertical responses, and their combined edge magnitude. You can use this as a quick check after implementing <code>convolve2d_full</code>.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "iLit",
+      "code_hash": "c2e0beb7c87f4c7b9dfbcbeb7b7ee763",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ZHCJ",
+      "code_hash": "ec52311afd1c9bed5779c8371c1b7eb5",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ROlb",
+      "code_hash": "7ca3e507293c823f2d35dc996c041145",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"problem-2-gaussian-and-laplacian-pyramids\">Problem 2: Gaussian and Laplacian Pyramids</h1>\n<span class=\"paragraph\">You are given a color image. Convert it to grayscale, then crop the 512\u00d7512 region beginning at the upper-left corner. Use this crop as the input image for both parts.</span>\n<span class=\"paragraph\">You will build pyramid levels at 512\u00d7512, 256\u00d7256, 128\u00d7128, and 32\u00d732. To reach 32\u00d732 from 128\u00d7128, blur and downsample twice. Do not use a prebuilt pyramid implementation.</span>\n<span class=\"paragraph\">A normalized 5\u00d75 Gaussian kernel is provided in the starter code. In your report, state your boundary convention, show the requested pyramid images at their corresponding resolutions, and include your code. If you use any non-standard-library helper, include it with a brief explanation.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "qnkX",
+      "code_hash": "c7ed399640183b39a84c386c5d6e405d",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "TqIu",
+      "code_hash": "dd5cfc47aff07ec8ee8d0e3697cae2c9",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"2a-gaussian-pyramid\">2(a) Gaussian Pyramid</h2>\n<span class=\"paragraph\">Create a Gaussian pyramid from the 512\u00d7512 grayscale crop using Gaussian convolution and the provided normalized 5\u00d75 kernel. Apply blur and downsampling to produce four levels, in this order: 512\u00d7512, 256\u00d7256, 128\u00d7128, and 32\u00d732. Document your boundary convention, and include the four images and your code in the report. Do not use a prebuilt pyramid implementation.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Vxnm",
+      "code_hash": "8961d93d69e5ab4ece66fb94a81388cd",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "DnEU",
+      "code_hash": "36fa2aad034147a60158bbad13779ed5",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ulZA",
+      "code_hash": "82845ad437c0656bfcf88fdb913102cb",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"2b-laplacian-pyramid\">2(b) Laplacian Pyramid</h2>\n<span class=\"paragraph\">Using your Gaussian pyramid, construct the corresponding Laplacian pyramid. Construct the Laplacian pyramid for each of the four resolutions given above. For example, to construct the Laplacian pyramid at resolution 512x512, you take the Gaussian smoothed image at resolution 512x512 and subtract it from the original 512x512 image.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ecfG",
+      "code_hash": "2e599b76c4b264e33f77854390d4ffec",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Pvdt",
+      "code_hash": "037cf7363ebf4e6eee9a53954e58b87d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h3 id=\"pyramid-visualizations\">Pyramid Visualizations</h3>\n<span class=\"paragraph\">After completing your functions, the hidden cells below display the Gaussian pyramid in the first row and the Laplacian pyramid in the second row.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ZBYS",
+      "code_hash": "380dc1fea8c5788dfee272923662e313",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "aLJB",
+      "code_hash": "3a79099b9dd9706905f3df62d7c032e6",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "nHfw",
+      "code_hash": "a4c74069891b54d92b1bf24d6b313347",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"problem-3-harris-corner-detector\">Problem 3: Harris Corner Detector</h1>\n<span class=\"paragraph\">For this part, implement a Harris corner detector. At each image location, compute the corner response function (CRF)</span>\n<marimo-tex class=\"arithmatex\">||[\nR(x, y) = \\det(A) - k\\bigl(\\operatorname{trace}(A)\\bigr)^2,\n||]</marimo-tex><span class=\"paragraph\">where <marimo-tex class=\"arithmatex\">||(A||)</marimo-tex> is the local structure matrix</span>\n<marimo-tex class=\"arithmatex\">||[\nA =\n\\begin{bmatrix}\n\\langle I_x^2 \\rangle &amp; \\langle I_x I_y \\rangle \\\\\n\\langle I_x I_y \\rangle &amp; \\langle I_y^2 \\rangle\n\\end{bmatrix}.\n||]</marimo-tex><span class=\"paragraph\">Use a simple constant 3\u00d73 averaging window for the local averages. You may use any discrete derivative approximation, but write down the equations you use. You may ignore image-border effects by zero-padding or by limiting calculations to the image interior.</span>\n<span class=\"paragraph\">Use the CRF to identify the top <marimo-tex class=\"arithmatex\">||(N||)</marimo-tex> candidate corners, where <marimo-tex class=\"arithmatex\">||(N||)</marimo-tex> is around 20\u201350. Threshold and sort the candidates before selecting the final locations. Your function should return <code>(row, column)</code> locations.</span>\n<span class=\"paragraph\">Put your complete implementation, including any helper functions, in the cell below. You may use functions defined elsewhere in this notebook. Use the KAVLI image to demonstrate your detector: include your code in the report, overlay the detected corners on the image, list their coordinates, state your parameter values, and comment on the results.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "xXTn",
+      "code_hash": "2f18e24e152a2b5c91842e6df554af25",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "AjVT",
+      "code_hash": "31bbed7c14c1ecb7d8609aa21f083ee2",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "pHFh",
+      "code_hash": "78ef9175785435050f02cdaddcc30221",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"question-4-philosophy-of-computer-vision\">Question 4: Philosophy of Computer Vision</h1>\n<h2 id=\"4a-biological-facial-recognition\">4(a) Biological Facial Recognition</h2>\n<span class=\"paragraph\">How do humans recognize faces? Describe the features the visual system could use and the processing that might occur at each stage, from seeing a face to identifying the person.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "NCOB",
+      "code_hash": "a860b67bda30b37997542265ab74a2f0",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Your response to 4(a)</span>\n<span class=\"paragraph\"><em>Double-click this cell to write your answer. You may replace everything here.</em></span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "aqbW",
+      "code_hash": "33338b1f6678b869036a12e1b9069abf",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"4b-computer-vision-in-the-age-of-ai\">4(b) Computer Vision in the Age of AI</h2>\n<span class=\"paragraph\">As AI becomes better at writing code and optimizing pipelines, what should students learn in a computer vision course?</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "TRpd",
+      "code_hash": "31cfcb1a8bf5eeba72f5ea098adf6373",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Your response to 4(b)</span>\n<span class=\"paragraph\"><em>Double-click this cell to write your answer. You may replace everything here.</em></span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "TXez",
+      "code_hash": "9995f134b551d2c6886bbe5b7db06a56",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"4c-course-milestone\">4(c) Course Milestone</h2>\n<span class=\"paragraph\">What would you like to accomplish by the end of this course? Describe a project, a skill you want to develop, or another goal you hope to reach.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "dNNg",
+      "code_hash": "cc13e853139fa271cf529830bdc29b67",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Your response to 4(c)</span>\n<span class=\"paragraph\"><em>Double-click this cell to write your answer. You may replace everything here.</em></span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "yCnT",
+      "code_hash": "7c9527779efd1dcd6b92b99e32a096c3",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"submitting-your-work\">Submitting Your Work</h1>\n<span class=\"paragraph\">If you used Molab, click <strong>Export</strong> and choose <strong>Python</strong> to download your completed notebook as a <code>.py</code> file. Submit that <code>.py</code> notebook file to Gradescope.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    }
+  ]
+}
