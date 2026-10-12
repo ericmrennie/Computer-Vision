@@ -107,23 +107,23 @@ def _(mo):
 
 
 @app.cell
-def _():
+def _(np):
     # EDIT BELOW: transcribe the matrices displayed above into NumPy arrays.
     # Replace the zero defaults with the instructor-provided entries for I_1 and I_2.
-    image_1 = ([[1, 1, 1],
+    image_1 = np.array([[1, 1, 1],
                [3, 3, 3],
                [6, 6, 6]])
-    image_2 = ([[10, 10, 10],
+    image_2 = np.array([[10, 10, 10],
                [10, 100, 100],
                [10, 100, 100]])
 
-    sobel_x = ([[-1, 0, 1],
+    sobel_x = np.array([[-1, 0, 1],
                [-2, 0, 2],
                [-1, 0, 1]])
-    sobel_y = ([[-1, -2, -1],
+    sobel_y = np.array([[-1, -2, -1],
               [0, 0, 0],
               [1, 2, 1]])
-    laplacian = ([[0, 1, 0],
+    laplacian = np.array([[0, 1, 0],
                  [1, -4, 1],
                  [0, 1, 0]])
     return image_1, image_2, laplacian, sobel_x, sobel_y
@@ -144,7 +144,19 @@ def _(mo):
     mo.md(r"""
     Your response to 1(a)
 
-    *Double-click this cell to write your answer. You may replace everything here.*
+    S_x * I_1 = ([[-1, -1, 0, 1, 1],
+                [-5, [-5], 0, 5, 5],
+                [-13, -13, 0, 13, 13],
+                [-15, -15, 0, 15, 15],
+                [-6, -6, 0, 6, 6]])
+
+    S_y * I_1 = ([[-1, -3, -4, -3, -1],
+                [-3, [-9], -12, -9, -3],
+                [-5, -15, -20, -15, -5],
+                [3, 9, 12, 9, 3],
+                [6, 18, 24, 18, 6
+
+    I1 contains horizontal edges, with intensity increasing downward. It contains no vertical edges since Sx's interior response is zero. The edges are located between pixel rows 0-1 and 1-2 across the width of the image.
     """)
     return
 
@@ -164,7 +176,13 @@ def _(mo):
     mo.md(r"""
     Your response to 1(b)
 
-    *Double-click this cell to write your answer. You may replace everything here.*
+    L * I_2 = ([[0,10,10,10,0],
+                [10,[-20],80,70,10],
+                [10,80,-180,-190,100],
+                [10,70,-190,-200,100],
+                [0,10,100,100,0]])
+
+    The corner is at output matrix (1,1) = -180, matching I2 pixel (1,1), the 100 where the bright region starts in both directions. It's the only cell with no padding used in the Laplacian calculation. It's negative because the pixel is brighter than its neighbor average. It's a corner because the two neighbors above and left are dark. The cells beside it at (0,1) and (1,0) are +80 which marks a boundary due to the sign change. The larger values of -190 and -200 include the padding and therefore include some artifacts.
     """)
     return
 
@@ -180,7 +198,14 @@ def _(mo):
 
 
 @app.cell
-def _(np):
+def _(image_1, image_2, laplacian, np, sobel_x, sobel_y):
+    # image = np.array([[1, 2, 3],
+    #                  [4, 5, 6],
+    #                  [7, 8, 9]])
+    # kernel = np.array([[1, 0, 1],
+    #                 [-2, 0, 2],
+    #                   [-1, 0, 1]])
+
     def convolve2d_full(image, kernel):
         """Return the full 2D linear convolution of image and kernel."""
         output_shape = (
@@ -191,8 +216,42 @@ def _(np):
 
         # EDIT BELOW: flip kernel and accumulate every shifted product in output.
 
+        # reverse the kernel
+        reversed_kernel = kernel[::-1, ::-1];
+
+        # pad
+        padded_H = len(image) + (2*(len(kernel) - 1))
+        padded_W = len(image[0]) + (2*(len(kernel[0]) - 1))
+
+        padded_image = [[0 for _ in range(padded_W)] for _ in range(padded_H)]
+
+        # place the image inside the padded image
+        for i in range(len(image)):
+            for j in range(len(image[i])):
+                padded_image[(len(kernel) - 1) + i][(len(kernel[0]) - 1) + j] = image[i][j];
+
+        # using the flipped kernel, iterate through the padded image
+        kH = len(kernel)
+        kW = len(kernel[0])
+
+        for i in range(output_shape[0]):
+            for j in range(output_shape[1]):
+                total = 0.0
+                for m in range(kH):
+                    for n in range(kW):
+                        total += padded_image[i+m][j + n] * reversed_kernel[m][n]
+                output[i][j] = total;
+
+
+
+
+
         return output
 
+    # print(convolve2d_full(image, kernel))
+    print(convolve2d_full(image_1, sobel_x))
+    print(convolve2d_full(image_1, sobel_y))
+    print(convolve2d_full(image_2, laplacian))
     return (convolve2d_full,)
 
 
@@ -266,10 +325,14 @@ def _(mo):
 
 
 @app.cell
-def _(storke_tower_image):
+def _(mo, storke_tower_image):
     # EDIT BELOW: take the upper-left crop from storke_tower_image.
     input_image = storke_tower_image
-    return (input_image,)
+
+    cropped_image = input_image[0:512, 0:512]
+
+    mo.image(cropped_image, width=220)
+    return cropped_image, input_image
 
 
 @app.cell(hide_code=True)
@@ -282,16 +345,48 @@ def _(mo):
     return
 
 
-@app.function
-def blur_and_downsample(image, kernel):
-    """Blur image with kernel, then reduce each spatial dimension by two."""
-    # EDIT BELOW: call convolve2d_full, crop to image.shape, then subsample.
-    # Document your boundary convention.
-    return image[::2, ::2]
+@app.cell
+def _(convolve2d_full, cropped_image, np):
+    kernel = np.array(
+            [
+                [1, 4, 6, 4, 1],
+                [4, 16, 24, 16, 4],
+                [6, 24, 36, 24, 6],
+                [4, 16, 24, 16, 4],
+                [1, 4, 6, 4, 1],
+            ],
+            dtype=float,
+        ) / 256
+
+    def blur_same_size(image, kernel):
+        full = convolve2d_full(image,kernel)
+
+        H, W = image.shape
+        kH, kW = kernel.shape
+        start_r = (kH - 1) // 2
+        start_c = (kW - 1) // 2
+        blurred = full[start_r: start_r + H, start_c : start_c + W]
+
+        return blurred
+
+    def blur_and_downsample(image, kernel):
+        """Blur image with kernel, then reduce each spatial dimension by two."""
+        # EDIT BELOW: call convolve2d_full, crop to image.shape, then subsample.
+        # Document your boundary convention.
+
+
+        # boundary convention: zero padding. pixels outside the image are treated as 0, which darkens the edges of the blurred image
+
+        blurred = blur_same_size(image, kernel)
+
+        return blurred[::2, ::2]
+
+    print(blur_and_downsample(cropped_image, kernel))
+    return blur_and_downsample, blur_same_size
 
 
 @app.cell
-def _(np):
+def _(blur_and_downsample, np):
     def build_gaussian_pyramid(
         image, level_shapes=((512, 512), (256, 256), (128, 128), (32, 32))
     ):
@@ -309,8 +404,13 @@ def _(np):
         pyramid = [image]
 
         # EDIT BELOW: call blur_and_downsample until each requested level is reached.
-        # Keep levels in the same order as level_shapes.
+        for target in level_shapes[1:]: # target is 256
+            current = pyramid[-1] # current is 512
+            while current.shape != target:
+                current = blur_and_downsample(current, kernel)
+            pyramid.append(current)
 
+        # Keep levels in the same order as level_shapes.
         return pyramid
 
     return (build_gaussian_pyramid,)
@@ -326,15 +426,41 @@ def _(mo):
     return
 
 
-@app.function
-def build_laplacian_pyramid(gaussian_pyramid):
-    """Return Laplacian levels followed by the coarsest Gaussian residual."""
-    pyramid = []
+@app.cell
+def _(blur_same_size, np):
+    def build_laplacian_pyramid(gaussian_pyramid):
 
-    # EDIT BELOW: construct the Laplacian level at each requested resolution,
-    # then append the final coarsest Gaussian level.
+        kernel = np.array(
+            [
+                [1, 4, 6, 4, 1],
+                [4, 16, 24, 16, 4],
+                [6, 24, 36, 24, 6],
+                [4, 16, 24, 16, 4],
+                [1, 4, 6, 4, 1],
+            ],
+            dtype=float,
+        ) / 256
 
-    return pyramid
+        """Return Laplacian levels followed by the coarsest Gaussian residual."""
+        pyramid = []
+
+        # EDIT BELOW: construct the Laplacian level at each requested resolution,
+        # then append the final coarsest Gaussian level.
+
+        g = None
+
+        for level in gaussian_pyramid:
+            g = level
+            g_blurred = blur_same_size(g, kernel)
+
+            pyramid.append(g - g_blurred)
+
+        pyramid.append(g)
+
+        return pyramid
+
+
+    return (build_laplacian_pyramid,)
 
 
 @app.cell(hide_code=True)
@@ -348,7 +474,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(build_gaussian_pyramid, input_image):
+def _(build_gaussian_pyramid, build_laplacian_pyramid, input_image):
     try:
         gaussian_pyramid = build_gaussian_pyramid(input_image)
         laplacian_pyramid = build_laplacian_pyramid(gaussian_pyramid)
@@ -406,17 +532,86 @@ def _(mo):
     return
 
 
-@app.function
-def harris_corners(image, threshold, max_corners=40, k=0.04):
-    """Return up to max_corners Harris corners as (row, column) locations."""
-    # EDIT BELOW: write your complete detector and any helpers here.
-    ...
+@app.cell
+def _(blur_same_size, np):
+    # ran out of time - this problem was solved with AI. Can you let me know if this is the correct approach?
+
+    def harris_corners(image, threshold, max_corners=40, k=0.04,
+                       min_distance=7, margin=5):
+        """Return up to max_corners Harris corners as (row, column) locations.
+
+        threshold    : fraction of R.max(); only pixels with R > threshold * R.max()
+                       are candidates.
+        min_distance : minimum spacing (in pixels) between returned corners.
+        margin       : border width ignored, since zero padding creates fake
+                       responses at the image edge.
+        """
+        img = image.astype(float)
+
+        # Derivative kernels (Sobel). Defined locally so the function is self-contained.
+        sx = np.array([[-1, 0, 1],
+                       [-2, 0, 2],
+                       [-1, 0, 1]], dtype=float)
+        sy = np.array([[-1, -2, -1],
+                       [ 0,  0,  0],
+                       [ 1,  2,  1]], dtype=float)
+
+        # Constant 3x3 averaging window
+        avg = np.ones((3, 3)) / 9.0
+
+        # 1. Image derivatives (same-size convolution, zero padding)
+        Ix = blur_same_size(img, sx)
+        Iy = blur_same_size(img, sy)
+
+        # 2. Products
+        Ix2 = Ix * Ix
+        Iy2 = Iy * Iy
+        Ixy = Ix * Iy
+
+        # 3. Local averages: entries of the structure matrix A
+        Sxx = blur_same_size(Ix2, avg)
+        Syy = blur_same_size(Iy2, avg)
+        Sxy = blur_same_size(Ixy, avg)
+
+        # 4. Corner response R = det(A) - k * trace(A)^2
+        R = (Sxx * Syy - Sxy * Sxy) - k * (Sxx + Syy) ** 2
+
+        # 5. Ignore the border
+        R[:margin, :] = 0
+        R[-margin:, :] = 0
+        R[:, :margin] = 0
+        R[:, -margin:] = 0
+
+        # 6. Threshold, then sort candidates strongest to weakest
+        cutoff = threshold * R.max()
+        candidates = np.argwhere(R > cutoff)            # rows of (row, col)
+        if len(candidates) == 0:
+            return np.empty((0, 2), dtype=int)
+        scores = R[candidates[:, 0], candidates[:, 1]]
+        candidates = candidates[np.argsort(-scores)]
+
+        # 7. Greedy non-maximum suppression, stop at max_corners
+        kept = []
+        for r, c in candidates:
+            if all(max(abs(r - kr), abs(c - kc)) >= min_distance for kr, kc in kept):
+                kept.append((r, c))
+                if len(kept) == max_corners:
+                    break
+
+        return np.array(kept, dtype=int).reshape(-1, 2)
+
+
+
+
+    return (harris_corners,)
 
 
 @app.cell
-def _(kavli_image, plt):
-    # EDIT BELOW: choose a threshold, then plot the detected corners.
-    corners = harris_corners(kavli_image, threshold=...)
+def _(harris_corners, kavli_image, plt):
+    corners = harris_corners(kavli_image, threshold=0.01)
+    print(len(corners))
+    print(corners)                      # (row, column) list for the report
+
     plt.imshow(kavli_image, cmap="gray")
     plt.axis("off")
     plt.scatter(corners[:, 1], corners[:, 0], c="r", s=10)
