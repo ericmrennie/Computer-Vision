@@ -11,7 +11,7 @@ while True:
   #frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY) # uncommented converts to greyscale
   #frame = cv.circle(frame, (447, 63), 23, (0, 0, 255), -1) # draws a circle on the frame
 
-  frame = cv.medianBlur(frame, 9) # sorts pixels in 9x9 grid
+  # frame = cv.medianBlur(frame, 9) # sorts pixels in 9x9 grid
 
   #frame = cv.putText(frame, \
   #        'Hello', \
