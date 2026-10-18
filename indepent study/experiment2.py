@@ -1,4 +1,5 @@
-# Laplacian of Gaussian
+# Laplacian of Gaussian with a 9x9 Gaussian kernel and a Laplacian scale of 7. 
+# Gives topographic visuals
 
 #!/usr/bin/env python3
 # reference - OpenCV API docs python 
@@ -20,26 +21,13 @@ def show_abs(x, alpha=1.0):
     convertScaleAbs -> |x| * alpha, clipped to uint8 for display."""
     return to_bgr(cv.convertScaleAbs(x, alpha=alpha))
 
-# ---------------------------------------------------------------- custom kernels via filter2D
-# cv.filter2D(src, ddepth, kernel): ddepth=-1 means "same depth as src".
-# NOTE: OpenCV computes correlation, not flipped convolution (matters only for asymmetric kernels).
-# K_SHARPEN = np.array([[ 0, -1,  0],
-#                       [-1,  5, -1],
-#                       [ 0, -1,  0]], np.float32)
-
-SE = cv.getStructuringElement(cv.MORPH_ELLIPSE, (7, 7))  # also MORPH_RECT, MORPH_CROSS
-
 while True:
   _, frame = vid.read()
 
   frame = frame[::3, ::3, :] # downsample (nearest) // takes every third pixel. image is 1/3x1/3 as big
-
-  # frame = cv.filter2D(frame, -1, K_SHARPEN)
-
-  frame = cv.Canny(to_gray(frame), 100, 200)
-  frame = cv.bitwise_not(frame)
-
-
+  
+  frame = cv.GaussianBlur(to_gray(frame), (9, 9), 0)
+  frame = show_abs(cv.Laplacian(frame, cv.CV_16S, ksize=7))
   cv.imshow('frame', frame) # posts frame on the screen
 
   if cv.waitKey(1) & 0xFF == ord('q'): # quits
