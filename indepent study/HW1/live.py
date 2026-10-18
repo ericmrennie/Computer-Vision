@@ -1,3 +1,5 @@
+# Karl Yerkes 2026
+
 #!/usr/bin/env python3
 # reference - OpenCV API docs python 
 

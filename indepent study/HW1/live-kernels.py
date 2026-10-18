@@ -1,3 +1,5 @@
+#Claude generated 
+
 #!/usr/bin/env python3
 """
 live_kernels.py - your live.py template, extended with a catalog of OpenCV
