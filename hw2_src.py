@@ -127,44 +127,23 @@ def _(mo):
 
 
 @app.cell
-def _():
+def _(x):
+    test = structure_2 = [[8, 0], [0, 7]]
+
     def classify_feature(structure, threshold=1.0):
         """Return 'corner', 'edge', 'flat' or 'invalid' for a 2x2 structure matrix."""
 
         # EDIT BELOW: compute both eigenvalues of [[a, b], [b, c]], then use
         # them to decide and return the feature type or invalid.
+        # going to represent lambda with x
+        lambda_matrix = structure - [[x, 0], [0, x]]
 
-        # Source - https://stackoverflow.com/a/47465534
-    # Posted by user5604477, modified by community. See post 'Timeline' for change history
-    # Retrieved 2026-10-15, License - CC BY-SA 4.0
-
-    def determinant(matrix, mul):
-
-        width = len(matrix)
-        if width == 1:
-            return mul * matrix[0][0]
-        else:
-            sign = -1
-            answer = 0
-            for i in range(width):
-                m = []
-                for j in range(1, width):
-                    buff = []
-                    for k in range(width):
-                        if k != i:
-                            buff.append(matrix[j][k])
-                    m.append(buff)
-                sign *= -1
-                answer = answer + mul * determinant(m, sign * matrix[0][i])
-        return answer
-
-    test_matrix = [[8, 0],[0, 7]]
-
-    print(determinant(test_matrix, 1))
-
+        return lambda_matrix
 
         # return "flat"
-    return (classify_feature,)
+
+    print(classify_feature(test))
+    return classify_feature, structure_2
 
 
 @app.cell(hide_code=True)

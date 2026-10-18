@@ -8,14 +8,7 @@
     {
       "id": "Hbol",
       "code_hash": "d1ec41387cff9600b7e350d941163145",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/plain": ""
-          }
-        }
-      ],
+      "outputs": [],
       "console": []
     },
     {
@@ -34,35 +27,14 @@
     {
       "id": "vblA",
       "code_hash": "a6f2c8ee34ab4dffbdf97a97cca5ec27",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/plain": ""
-          }
-        }
-      ],
+      "outputs": [],
       "console": []
     },
     {
       "id": "bkHC",
       "code_hash": "871a4a939c84ae852d3c46aa58b363a7",
-      "outputs": [
-        {
-          "type": "error",
-          "ename": "interruption",
-          "evalue": "This cell was interrupted and needs to be re-run",
-          "traceback": []
-        }
-      ],
-      "console": [
-        {
-          "type": "stream",
-          "name": "stderr",
-          "text": "<span class=\"codehilite\"><div class=\"highlight\"><pre><span></span><span class=\"gt\">Traceback (most recent call last):</span>\n  File <span class=\"nb\">\"/var/folders/j3/jr_7js5j7hdby7m5yl573lww0000gn/T/marimo_84956/__marimo__cell_bkHC_.py\"</span>, line <span class=\"m\">1</span>, in <span class=\"n\">&lt;module&gt;</span>\n<span class=\"w\">    </span><span class=\"n\">hw1_definitions</span> <span class=\"o\">=</span> <span class=\"n\">homework1_definitions</span><span class=\"p\">()</span>\n  File <span class=\"nb\">\"/var/folders/j3/jr_7js5j7hdby7m5yl573lww0000gn/T/marimo_84956/__marimo__cell_vblA_.py\"</span>, line <span class=\"m\">12</span>, in <span class=\"n\">homework1_definitions</span>\n<span class=\"w\">    </span><span class=\"n\">_</span><span class=\"p\">,</span> <span class=\"n\">hw1</span><span class=\"o\">.</span><span class=\"n\">_hw2_definitions</span> <span class=\"o\">=</span> <span class=\"n\">hw1</span><span class=\"o\">.</span><span class=\"n\">app</span><span class=\"o\">.</span><span class=\"n\">run</span><span class=\"p\">()</span>\n<span class=\"w\">                              </span><span class=\"pm\">~~~~~~~~~~~^^</span>\n  File <span class=\"nb\">\"/Users/ericmrennie/Desktop/Computer-Vision/marimo-env/lib/python3.14/site-packages/marimo/_ast/app.py\"</span>, line <span class=\"m\">795</span>, in <span class=\"n\">run</span>\n<span class=\"w\">    </span><span class=\"p\">)</span><span class=\"o\">.</span><span class=\"n\">run</span><span class=\"p\">()</span>\n<span class=\"w\">      </span><span class=\"pm\">~~~^^</span>\n  File <span class=\"nb\">\"/Users/ericmrennie/Desktop/Computer-Vision/marimo-env/lib/python3.14/site-packages/marimo/_runtime/app/script_runner.py\"</span>, line <span class=\"m\">268</span>, in <span class=\"n\">run</span>\n<span class=\"w\">    </span><span class=\"k\">raise</span> <span class=\"n\">e</span><span class=\"o\">.</span><span class=\"n\">__cause__</span> <span class=\"kn\">from</span><span class=\"w\"> </span><span class=\"kc\">None</span>  <span class=\"c1\"># type: ignore</span>\n<span class=\"w\">    </span><span class=\"pm\">^^^^^^^^^^^^^^^^^^^^^^^^^^^</span>\n  File <span class=\"nb\">\"/Users/ericmrennie/Desktop/Computer-Vision/hw1.py\"</span>, line <span class=\"m\">479</span>, in <span class=\"n\">&lt;module&gt;</span>\n<span class=\"w\">    </span><span class=\"n\">gaussian_pyramid</span> <span class=\"o\">=</span> <span class=\"n\">build_gaussian_pyramid</span><span class=\"p\">(</span><span class=\"n\">input_image</span><span class=\"p\">)</span>\n<span class=\"w\">                   </span><span class=\"pm\">^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span>\n  File <span class=\"nb\">\"/Users/ericmrennie/Desktop/Computer-Vision/hw1.py\"</span>, line <span class=\"m\">410</span>, in <span class=\"n\">build_gaussian_pyramid</span>\n<span class=\"w\">    </span><span class=\"n\">current</span> <span class=\"o\">=</span> <span class=\"n\">blur_and_downsample</span><span class=\"p\">(</span><span class=\"n\">current</span><span class=\"p\">,</span> <span class=\"n\">kernel</span><span class=\"p\">)</span>\n<span class=\"w\">          </span><span class=\"pm\">^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span>\n  File <span class=\"nb\">\"/Users/ericmrennie/Desktop/Computer-Vision/hw1.py\"</span>, line <span class=\"m\">380</span>, in <span class=\"n\">blur_and_downsample</span>\n<span class=\"w\">    </span><span class=\"n\">blurred</span> <span class=\"o\">=</span> <span class=\"n\">blur_same_size</span><span class=\"p\">(</span><span class=\"n\">image</span><span class=\"p\">,</span> <span class=\"n\">kernel</span><span class=\"p\">)</span>\n<span class=\"w\">          </span><span class=\"pm\">^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span>\n  File <span class=\"nb\">\"/Users/ericmrennie/Desktop/Computer-Vision/hw1.py\"</span>, line <span class=\"m\">362</span>, in <span class=\"n\">blur_same_size</span>\n<span class=\"w\">    </span><span class=\"n\">full</span> <span class=\"o\">=</span> <span class=\"n\">convolve2d_full</span><span class=\"p\">(</span><span class=\"n\">image</span><span class=\"p\">,</span><span class=\"n\">kernel</span><span class=\"p\">)</span>\n<span class=\"w\">       </span><span class=\"pm\">^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span>\n  File <span class=\"nb\">\"/Users/ericmrennie/Desktop/Computer-Vision/hw1.py\"</span>, line <span class=\"m\">242</span>, in <span class=\"n\">convolve2d_full</span>\n<span class=\"w\">    </span><span class=\"n\">total</span> <span class=\"o\">+=</span> <span class=\"n\">padded_image</span><span class=\"p\">[</span><span class=\"n\">i</span><span class=\"o\">+</span><span class=\"n\">m</span><span class=\"p\">][</span><span class=\"n\">j</span> <span class=\"o\">+</span> <span class=\"n\">n</span><span class=\"p\">]</span> <span class=\"o\">*</span> <span class=\"n\">reversed_kernel</span><span class=\"p\">[</span><span class=\"n\">m</span><span class=\"p\">][</span><span class=\"n\">n</span><span class=\"p\">]</span>\n<span class=\"w\">    </span><span class=\"pm\">^</span>\n  File <span class=\"nb\">\"/Users/ericmrennie/Desktop/Computer-Vision/marimo-env/lib/python3.14/site-packages/marimo/_utils/signals.py\"</span>, line <span class=\"m\">33</span>, in <span class=\"n\">__call__</span>\n<span class=\"w\">    </span><span class=\"bp\">self</span><span class=\"o\">.</span><span class=\"n\">_handler</span><span class=\"p\">(</span><span class=\"n\">signum</span><span class=\"p\">,</span> <span class=\"n\">frame</span><span class=\"p\">)</span>\n<span class=\"w\">    </span><span class=\"pm\">~~~~~~~~~~~~~^^^^^^^^^^^^^^^</span>\n  File <span class=\"nb\">\"/Users/ericmrennie/Desktop/Computer-Vision/marimo-env/lib/python3.14/site-packages/marimo/_runtime/handlers.py\"</span>, line <span class=\"m\">74</span>, in <span class=\"n\">interrupt_handler</span>\n<span class=\"w\">    </span><span class=\"k\">raise</span> <span class=\"n\">MarimoInterrupt</span>\n<span class=\"gr\">KeyboardInterrupt</span>\n</pre></div>\n</span>",
-          "mimetype": "application/vnd.marimo+traceback"
-        }
-      ]
+      "outputs": [],
+      "console": []
     },
     {
       "id": "lEQa",
@@ -79,7 +51,7 @@
     },
     {
       "id": "PKri",
-      "code_hash": "194f4625478ee89fa33effc76513ac7f",
+      "code_hash": "71f44d72ebf04abee8283a0d62cc62f7",
       "outputs": [],
       "console": []
     },
@@ -124,21 +96,21 @@
     },
     {
       "id": "RGSE",
-      "code_hash": "59c152460d9c66ae570c1d7093e877f8",
+      "code_hash": "3ee8ed02197ce29aab2ee3016fd34b29",
       "outputs": [
         {
-          "type": "data",
-          "data": {
-            "text/plain": ""
-          }
+          "type": "error",
+          "ename": "exception",
+          "evalue": "name 'x' is not defined",
+          "traceback": null
         }
       ],
       "console": [
         {
           "type": "stream",
-          "name": "stdout",
-          "text": "56\n",
-          "mimetype": "text/plain"
+          "name": "stderr",
+          "text": "<span class=\"codehilite\"><div class=\"highlight\"><pre><span></span><span class=\"gt\">Traceback (most recent call last):</span>\n  File <span class=\"nb\">\"/var/folders/j3/jr_7js5j7hdby7m5yl573lww0000gn/T/marimo_29518/__marimo__cell_RGSE_.py\"</span>, line <span class=\"m\">15</span>, in <span class=\"n\">&lt;module&gt;</span>\n<span class=\"w\">    </span><span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"n\">classify_feature</span><span class=\"p\">(</span><span class=\"n\">test</span><span class=\"p\">))</span>\n<span class=\"w\">          </span><span class=\"pm\">~~~~~~~~~~~~~~~~^^^^^^</span>\n  File <span class=\"nb\">\"/var/folders/j3/jr_7js5j7hdby7m5yl573lww0000gn/T/marimo_29518/__marimo__cell_RGSE_.py\"</span>, line <span class=\"m\">9</span>, in <span class=\"n\">classify_feature</span>\n<span class=\"w\">    </span><span class=\"n\">lambda_matrix</span> <span class=\"o\">=</span> <span class=\"n\">structure</span> <span class=\"o\">-</span> <span class=\"p\">[[</span><span class=\"n\">x</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">],</span> <span class=\"p\">[</span><span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"n\">x</span><span class=\"p\">]]</span>\n<span class=\"w\">                                  </span><span class=\"pm\">^</span>\n<span class=\"gr\">NameError</span>: <span class=\"n\">name 'x' is not defined</span>\n</pre></div>\n</span>",
+          "mimetype": "application/vnd.marimo+traceback"
         }
       ]
     },
