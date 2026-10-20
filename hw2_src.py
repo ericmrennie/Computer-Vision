@@ -56,11 +56,11 @@ def homework1_definitions():
 
 @app.cell
 def _():
-    hw1_definitions = homework1_definitions()
-    laplacian = hw1_definitions["laplacian"]
-    convolve2d_full = hw1_definitions["convolve2d_full"]
-    harris_corners = hw1_definitions["harris_corners"]
-    return (convolve2d_full,)
+    # hw1_definitions = homework1_definitions()
+    # laplacian = hw1_definitions["laplacian"]
+    # convolve2d_full = hw1_definitions["convolve2d_full"]
+    # harris_corners = hw1_definitions["harris_corners"]
+    return
 
 
 @app.cell(hide_code=True)
@@ -91,7 +91,7 @@ def structure_matrices():
     # EDIT BELOW: replace the zero defaults with the displayed matrix entries.
     structure_1 = [[3, 3], [3, 3]]
     structure_2 = [[8, 0], [0, 7]]
-    structure_3 = [(1/1000)*[1, 0], [0, 1]]
+    structure_3 = [[1/1000, 0], [0, 1/1000]]
     structure_4 = [[1, 3], [3, 1]]
     return structure_1, structure_2, structure_3, structure_4
 
@@ -127,8 +127,8 @@ def _(mo):
 
 
 @app.cell
-def _(x):
-    test = structure_2 = [[8, 0], [0, 7]]
+def _(structure_2):
+    import math
 
     def classify_feature(structure, threshold=1.0):
         """Return 'corner', 'edge', 'flat' or 'invalid' for a 2x2 structure matrix."""
@@ -136,14 +136,27 @@ def _(x):
         # EDIT BELOW: compute both eigenvalues of [[a, b], [b, c]], then use
         # them to decide and return the feature type or invalid.
         # going to represent lambda with x
-        lambda_matrix = structure - [[x, 0], [0, x]]
+        a, b = structure[0]
+        c = structure[1][1]
 
-        return lambda_matrix
+        trace = a + c
+        det = a * c - b * b
+        disc = trace * trace - 4 * det
 
-        # return "flat"
+        root = math.sqrt(max(disc, 0))
+        lam1 = (trace + root) / 2
+        lam2 = (trace - root) / 2
 
-    print(classify_feature(test))
-    return classify_feature, structure_2
+        if lam2 < -1e-9 or math.isnan(lam1) or math.isnan(lam2):
+            return "invalid"
+        if lam1 < threshold:
+            return "flat"
+        if lam2 < threshold:
+            return "edge"
+        return "corner"
+
+    print(classify_feature(structure_2))
+    return (classify_feature,)
 
 
 @app.cell(hide_code=True)
@@ -192,7 +205,10 @@ def make_square_image(size, squares):
     import numpy as np
 
     # EDIT BELOW: set the pixels of image.
-    image = np.zeros((size, size))
+    image = np.full((size, size), 255)   # white background
+
+    for x, y, side in squares:
+        image[y : y + side, x : x + side] = 0  # rows (y) first, then columns (x)
 
     return image
 
@@ -202,9 +218,14 @@ def homework_squares():
     # EDIT BELOW: replace each template with (x, y, side) tuples.
     image_1_squares = [
         # EDIT HERE
+        (30,40,32)
     ]
     image_2_squares = [
         # EDIT HERE
+        (60, 60, 40),
+        (180, 300, 80),
+        (300, 100, 120),
+        (340, 340, 140)
     ]
     image_1 = make_square_image(100, image_1_squares)
     image_2 = make_square_image(512, image_2_squares)
@@ -259,7 +280,10 @@ def gaussian_kernel_1d(sigma):
     import numpy as np
 
     # EDIT BELOW: compute the radius, sample g at the integer offsets, normalize.
-    kernel = ...
+    r = int(np.ceil(3 * sigma)) # rounds up and gives np arange a whole number
+    x = np.arange(-r, r + 1) # np.arange stops before its end value, hence r+1
+    g = np.exp(-(x ** 2) / (2 * sigma ** 2)) # bell curve formula
+    kernel = g / g.sum(); # normalize so blurring doesn't change overall brightness
 
     return kernel
 
@@ -278,7 +302,8 @@ def gaussian_kernel_2d(sigma):
     import numpy as np
 
     # EDIT BELOW: construct the 2D kernel from your 1D Gaussian kernel.
-    kernel = ...
+    k = gaussian_kernel_1d(sigma)
+    kernel = np.outer(k, k) # np.outer(k, k) builds a matrix where entry [i, j] = k[i] * k[j]
 
     return kernel
 
@@ -291,16 +316,66 @@ def _(mo):
     return
 
 
-@app.function
-def convolve_same(image, kernel):
-    """Return the same-size convolution of image with an odd-sized 2D kernel."""
-    import numpy as np
-    convolve2d_full = homework1_definitions()["convolve2d_full"]
+@app.cell
+def _(np):
+    def convolve2d_full(image, kernel):
+        """Return the full 2D linear convolution of image and kernel."""
+        output_shape = (
+            image.shape[0] + kernel.shape[0] - 1,
+            image.shape[1] + kernel.shape[1] - 1,
+        )
+        output = np.empty(output_shape, dtype=float)
 
-    # EDIT BELOW: use convolve2d_full, then crop to image.shape.
-    same = ...
+        # EDIT BELOW: flip kernel and accumulate every shifted product in output.
 
-    return same
+        # reverse the kernel
+        reversed_kernel = kernel[::-1, ::-1];
+
+        # pad
+        padded_H = len(image) + (2*(len(kernel) - 1))
+        padded_W = len(image[0]) + (2*(len(kernel[0]) - 1))
+
+        padded_image = [[0 for _ in range(padded_W)] for _ in range(padded_H)]
+
+        # place the image inside the padded image
+        for i in range(len(image)):
+            for j in range(len(image[i])):
+                padded_image[(len(kernel) - 1) + i][(len(kernel[0]) - 1) + j] = image[i][j];
+
+        # using the flipped kernel, iterate through the padded image
+        kH = len(kernel)
+        kW = len(kernel[0])
+
+        for i in range(output_shape[0]):
+            for j in range(output_shape[1]):
+                total = 0.0
+                for m in range(kH):
+                    for n in range(kW):
+                        total += padded_image[i+m][j + n] * reversed_kernel[m][n]
+                output[i][j] = total;
+
+
+
+
+
+        return output
+
+    def convolve_same(image, kernel):
+        """Return the same-size convolution of image with an odd-sized 2D kernel."""
+        import numpy as np
+
+        # EDIT BELOW: use convolve2d_full, then crop to image.shape.
+        H, W = image.shape
+        ph = kernel.shape[0] // 2      # vertical radius
+        pw = kernel.shape[1] // 2      # horizontal radius
+
+        padded = np.pad(image.astype(float), ((ph, ph), (pw, pw)), mode="edge")
+        full = convolve2d_full(padded, kernel)
+        same = full[2 * ph : 2 * ph + H, 2 * pw : 2 * pw + W]
+
+        return same
+
+    return convolve2d_full, convolve_same
 
 
 @app.cell(hide_code=True)
@@ -311,17 +386,25 @@ def _(mo):
     return
 
 
-@app.function
-def gaussian_smooth(image, sigma):
-    """Return image smoothed by a 2D Gaussian of standard deviation sigma."""
-    # EDIT BELOW: smooth with gaussian_kernel_1d and convolve_same.
-    smoothed = ...
+@app.cell
+def _(convolve_same):
+    def gaussian_smooth(image, sigma):
+        """Return image smoothed by a 2D Gaussian of standard deviation sigma."""
+        # EDIT BELOW: smooth with gaussian_kernel_1d and convolve_same.
+        k = gaussian_kernel_1d(sigma)
+        row_kernel = k.reshape(1, -1)     # shape (1, n): horizontal pass
+        col_kernel = k.reshape(-1, 1)     # shape (n, 1): vertical pass
 
-    return smoothed
+        smoothed = convolve_same(image, row_kernel)
+        smoothed = convolve_same(smoothed, col_kernel)
+
+        return smoothed
+
+    return (gaussian_smooth,)
 
 
 @app.cell(hide_code=True)
-def _(image_1, mo, plt):
+def _(gaussian_smooth, image_1, mo, plt):
     sigmas = (1, 2, 4, 8)
     try:
         smoothed_by_sigma = {sigma: gaussian_smooth(image_1, sigma) for sigma in sigmas}
@@ -354,9 +437,7 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md(r"""
-    **Your answer to 2(b).**
-
-    *Double-click this cell to write your answer. You may replace everything here.*
+    Blurring with a 2D Gaussian can be split into two simpler blurs: first blur each row (left-right), then blur each column (up-down) of that result. Because the 2D Gaussian factors as G(x, y) = G(x) · G(y), the two passes give the same answer as one pass with the big 2D kernel, just with far less work.
     """)
     return
 
@@ -371,20 +452,106 @@ def _(mo):
     return
 
 
-@app.function
-def corners_at_scale(smoothed, threshold=..., max_corners=...):
-    """Return the Harris corners of a smoothed image as (row, column)."""
-    import numpy as np
-    harris_corners = homework1_definitions()["harris_corners"]
+@app.cell
+def _(convolve2d_full, np):
+    def blur_same_size(image, kernel):
+        full = convolve2d_full(image,kernel)
 
-    # EDIT BELOW: call your hw1 harris_corners function using threshold and max_corners.
-    corners = ...
+        H, W = image.shape
+        kH, kW = kernel.shape
+        start_r = (kH - 1) // 2
+        start_c = (kW - 1) // 2
+        blurred = full[start_r: start_r + H, start_c : start_c + W]
 
-    return corners
+        return blurred
+
+    def harris_corners(image, threshold, max_corners=40, k=0.04,
+                       min_distance=7, margin=5):
+        """Return up to max_corners Harris corners as (row, column) locations.
+
+        threshold    : fraction of R.max(); only pixels with R > threshold * R.max()
+                       are candidates.
+        min_distance : minimum spacing (in pixels) between returned corners.
+        margin       : border width ignored, since zero padding creates fake
+                       responses at the image edge.
+        """
+        img = image.astype(float)
+
+        # Derivative kernels (Sobel). Defined locally so the function is self-contained.
+        sx = np.array([[-1, 0, 1],
+                       [-2, 0, 2],
+                       [-1, 0, 1]], dtype=float)
+        sy = np.array([[-1, -2, -1],
+                       [ 0,  0,  0],
+                       [ 1,  2,  1]], dtype=float)
+
+        # Constant 3x3 averaging window
+        avg = np.ones((3, 3)) / 9.0
+
+        # 1. Image derivatives (same-size convolution, zero padding)
+        Ix = blur_same_size(img, sx)
+        Iy = blur_same_size(img, sy)
+
+        # 2. Products
+        Ix2 = Ix * Ix
+        Iy2 = Iy * Iy
+        Ixy = Ix * Iy
+
+        # 3. Local averages: entries of the structure matrix A
+        Sxx = blur_same_size(Ix2, avg)
+        Syy = blur_same_size(Iy2, avg)
+        Sxy = blur_same_size(Ixy, avg)
+
+        # 4. Corner response R = det(A) - k * trace(A)^2
+        R = (Sxx * Syy - Sxy * Sxy) - k * (Sxx + Syy) ** 2
+
+        # 5. Ignore the border
+        R[:margin, :] = 0
+        R[-margin:, :] = 0
+        R[:, :margin] = 0
+        R[:, -margin:] = 0
+
+        # 6. Threshold, then sort candidates strongest to weakest
+        cutoff = threshold * R.max()
+        candidates = np.argwhere(R > cutoff)            # rows of (row, col)
+        if len(candidates) == 0:
+            return np.empty((0, 2), dtype=int)
+        scores = R[candidates[:, 0], candidates[:, 1]]
+        candidates = candidates[np.argsort(-scores)]
+
+        # 7. Greedy non-maximum suppression, stop at max_corners
+        kept = []
+        for r, c in candidates:
+            if all(max(abs(r - kr), abs(c - kc)) >= min_distance for kr, kc in kept):
+                kept.append((r, c))
+                if len(kept) == max_corners:
+                    break
+
+        return np.array(kept, dtype=int).reshape(-1, 2)
+
+    def corners_at_scale(smoothed, threshold=..., max_corners=...):
+        """Return the Harris corners of a smoothed image as (row, column)."""
+        import numpy as np
+
+        # EDIT BELOW: call your hw1 harris_corners function using threshold and max_corners.
+        corners = harris_corners(smoothed, threshold=threshold, max_corners=max_corners)
+
+        return corners
+
+    return corners_at_scale, harris_corners
+
+
+@app.cell
+def _(mo):
+    harris_threshold = mo.ui.slider(0.01, 0.9, value=0.2, step=0.01, label="Harris threshold")
+    harris_max_corners = mo.ui.slider(1, 40, value=4, step=1, label="Max corners")
+    mo.hstack([harris_threshold, harris_max_corners])
+    return harris_max_corners, harris_threshold
 
 
 @app.cell(hide_code=True)
 def _(
+    corners_at_scale,
     harris_max_corners,
     harris_threshold,
     mo,
@@ -448,15 +615,22 @@ def _(mo):
     return
 
 
-@app.function
-def log_response(image, sigma):
-    """Return the Laplacian of Gaussian response of image at scale sigma."""
-    laplacian = homework1_definitions()["laplacian"]
+@app.cell
+def _(convolve_same, gaussian_smooth, np):
+    laplacian = np.array([[0, 1, 0],
+                 [1, -4, 1],
+                 [0, 1, 0]])
 
-    # EDIT BELOW
-    response = ...
+    def log_response(image, sigma):
+        """Return the Laplacian of Gaussian response of image at scale sigma."""
 
-    return response
+        # EDIT BELOW
+        smoothed = gaussian_smooth(image, sigma)
+        response = convolve_same(smoothed, laplacian)
+
+        return response
+
+    return (log_response,)
 
 
 @app.cell(hide_code=True)
@@ -473,21 +647,38 @@ def _(mo):
 
 
 @app.function
-# EDIT BELOW: choose a default fraction between 0 and 1.
-def local_extrema(response, fraction=...):
+def local_extrema(response, fraction=0.3):
     """Return (row, column) locations of the strong local extrema of response."""
     import numpy as np
 
-    magnitude = np.abs(np.asarray(response, dtype=float))
-    extrema = []
+    magnitude = np.abs(np.asarray(response, dtype=float)) # np.asarray makes sure you have a float array even if a list was passed. 
+    extrema = [] # collects row, column pairs
 
     # EDIT BELOW: append (row, column) for every pixel meeting the conditions above.
+    H, W = magnitude.shape # number of rows and columns
+    max_mag = magnitude.max() # largest magnitude in the image. Both thresholds below are measured against it
+    tol = 1e-9 * max_mag # tol is the tie tolerance from the instructions. floating-point math can make two values that should be equal differ by a hair, and this prevents a true tie from being rejected
+    cutoff = fraction * max_mag # strength threshold. With fraction=0.3, a pixel must be at least 30% as strong as the strongest pixel in the image
 
+    
+    # these visit every pixel except the outermost row and column. Guarantees every pixel tested has all 8 neighbours inside the array.
+    for r in range(1, H - 1):
+        for c in range(1, W - 1):
+            # value is pixel's magnitude. if it's below the cutoff, continue skips to the next pixel immediately. 
+            value = magnitude[r, c]
+            if value < cutoff:
+                continue
+            # local-peak test
+            window = magnitude[r - 1 : r + 2, c - 1 : c + 2]   # slices a 3×3 block centered on (r, c). The end index is exclusive, so r+2 includes row r+1. The block holds the pixel and its 8 neighbours.neighbourhood incl. center
+            if value >= window.max() - tol:
+                extrema.append((r, c))
+
+    # The list of tuples becomes an integer array of shape (N, 2). The .reshape(-1, 2) matters for the empty case: an empty list converts to shape (0,), and reshaping gives (0, 2) as the assignment requires.
     return np.asarray(extrema, dtype=int).reshape(-1, 2)
 
 
 @app.cell(hide_code=True)
-def _(image_1, mo, np, plt, sigmas, smoothing_error):
+def _(image_1, log_response, mo, np, plt, sigmas, smoothing_error):
     try:
         if smoothing_error:
             raise RuntimeError(smoothing_error)
@@ -526,17 +717,29 @@ def _(mo):
     return
 
 
-@app.function
-def dog_response(image, sigma, k=1.4):
-    """Return the Difference of Gaussian response of image at scale sigma."""
-    # EDIT BELOW
-    response = ...
+@app.cell
+def _(gaussian_smooth):
+    def dog_response(image, sigma, k=1.4):
+        """Return the Difference of Gaussian response of image at scale sigma."""
+        # EDIT BELOW
+        response = gaussian_smooth(image, sigma*k)-gaussian_smooth(image,sigma)
 
-    return response
+        return response
+
+    return (dog_response,)
 
 
 @app.cell(hide_code=True)
-def _(image_1, log_by_sigma, mo, np, plt, sigmas, smoothing_error):
+def _(
+    dog_response,
+    image_1,
+    log_by_sigma,
+    mo,
+    np,
+    plt,
+    sigmas,
+    smoothing_error,
+):
     try:
         if smoothing_error:
             raise RuntimeError(smoothing_error)
@@ -580,7 +783,7 @@ def _(mo):
     mo.md(r"""
     **Your answer to 2(e).**
 
-    *Double-click this cell to write your answer. You may replace everything here.*
+    At small scales, LoG and DoG behave almost identically. At σ = 1, LoG finds 188 extrema and DoG finds 172, both tracing the outline of the square along its edges and corners. As σ increases, both methods lose extrema because Gaussian smoothing merges the square’s edge and corner responses into a single broad blob. LoG drops from 188 to 140, 44, and 24, while DoG drops faster, from 172 to 108, 12, and 4. At σ = 8, LoG still shows extrema near the edge midpoints and inside the square, while DoG collapses to a single cluster at the center and no longer shows the square’s edges or corners. This is expected because DoG is a band-pass filter between σ and kσ, so at large σ it responds to the square as a whole blob rather than to its edges, and because the shared fraction threshold is relative to each response’s maximum, a dominant central peak removes the weaker ones. DoG only approximates LoG, so the two agree at small scales and diverge at large ones. Overall, LoG localizes the square’s structure better at large σ, while DoG is better suited to identifying the overall blob and its scale.
     """)
     return
 
@@ -605,7 +808,7 @@ def downsample(image, factor):
     import numpy as np
 
     # EDIT BELOW
-    sampled = ...
+    sampled = image[::factor, ::factor]
 
     return sampled
 
@@ -618,18 +821,26 @@ def _(mo):
     return
 
 
-@app.function
-def build_scale_pyramid(image, sigmas):
-    """Return (smoothed, levels): full-resolution and downsampled images per sigma."""
-    # EDIT BELOW
-    smoothed = ...
-    levels = ...
+@app.cell
+def _(gaussian_smooth):
+    def build_scale_pyramid(image, sigmas):
+        """Return (smoothed, levels): full-resolution and downsampled images per sigma."""
+        # EDIT BELOW
+        smoothed = []
+        levels = []
 
-    return smoothed, levels
+        for sigma in sigmas:
+            blurred = gaussian_smooth(image,sigma)
+            smoothed.append(blurred)
+            levels.append(downsample(blurred, int(sigma)))
+
+        return smoothed, levels
+
+    return (build_scale_pyramid,)
 
 
 @app.cell(hide_code=True)
-def _(image_2, mo, plt, sigmas):
+def _(build_scale_pyramid, image_2, mo, plt, sigmas):
     try:
         image_2_smoothed, image_2_levels = build_scale_pyramid(image_2, sigmas)
         pyramid_error = None
@@ -667,9 +878,7 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md(r"""
-    **Your answer to 3(a).**
-
-    *Double-click this cell to write your answer. You may replace everything here.*
+    As σ increases, the smoothed images become progressively blurrier: edges soften into wide gradients, corners round off, and the smallest square shrinks into a fuzzy blob by σ = 8. Downsampling discards pixels in proportion to the blur, so the pyramid levels get smaller (512 down to 64) and look more blocky. Because the blur is only about one pixel wide in each level, the edges can look crisper, but this is a pixelation effect, not extra detail. Corner and edge locations are less precise at coarse levels, and small features like the top-left square nearly disappear. The pyramid keeps the coarse structure (the large squares) while losing fine detail.
     """)
     return
 
@@ -689,18 +898,22 @@ def _(mo):
     return
 
 
-@app.function
-def image_2_corners(image, threshold=..., max_corners=...):
-    """Return the Harris corners of a smoothed Image 2 or pyramid level as (row, column)."""
-    # EDIT BELOW: call your hw1 harris_corners function using threshold and max_corners.
-    corners = ...
+@app.cell
+def _(harris_corners):
+    def image_2_corners(image, threshold=0.2, max_corners=16):
+        """Return the Harris corners of a smoothed Image 2 or pyramid level as (row, column)."""
+        # EDIT BELOW: call your hw1 harris_corners function using threshold and max_corners.
+        corners = harris_corners(image, threshold, max_corners)
 
-    return corners
+        return corners
+
+    return (image_2_corners,)
 
 
 @app.cell(hide_code=True)
 def _(
     convolve2d_full,
+    image_2_corners,
     image_2_levels,
     image_2_smoothed,
     mo,
@@ -777,7 +990,9 @@ def _(mo):
     mo.md(r"""
     **Your answer to 3(b).**
 
-    *Double-click this cell to write your answer. You may replace everything here.*
+    Corner locations are consistent until sigma 8, where the blurred image only returns one corner, and the image downsampled by a factor of 8 returns 13 corners. Beginning at sigma and factor 4, the accuracy of the corners begins to degrade. The median harris response R decreases with each blurred copy, but appears to increase slightly with each downsampled copy until factor 8.
+
+    AI takeaway: A fixed-size detector only works well when the feature scale matches the window size. Heavy blur at full resolution makes the structure too smooth for a 3×3 window, so the response collapses (i). Downsampling by σ rescales the image so the detector sees edges at a consistent sharpness, and the response stays stable (ii). The price is resolution: at the coarsest level, nearby corners of small squares merge or get suppressed.
     """)
     return
 
@@ -811,7 +1026,7 @@ def effective_sigma(factor, sigma):
     import numpy as np
 
     # EDIT BELOW
-    sigma_eff = ...
+    sigma_eff = np.sqrt((factor ** 2) + ((factor * sigma) ** 2))
 
     return sigma_eff
 
@@ -826,19 +1041,37 @@ def _(mo):
     return
 
 
-@app.function
-def pyramid_extrema(levels, factors, sigmas, method="log"):
-    """Return (row, column, factor, sigma_eff) for the extrema of every level and scale."""
-    import numpy as np
+@app.cell
+def _(log_response):
+    def pyramid_extrema(levels, factors, sigmas, method="log"):
+        """Return (row, column, factor, sigma_eff) for the extrema of every level and scale."""
+        import numpy as np
 
-    extrema = []
-    # EDIT BELOW
+        extrema = []
+        # EDIT BELOW
+        for level, f in zip(levels, factors):
+            for sigma in sigmas:
+                response = log_response(level, sigma)
+                points = local_extrema(response, fraction=0.3)
+                sigma_eff = effective_sigma(f, sigma)
+                for row, col in points:
+                    extrema.append([row, col, f, sigma_eff])
 
-    return np.asarray(extrema, dtype=float).reshape(-1, 4)
+        return np.asarray(extrema, dtype=float).reshape(-1, 4)
+
+    return (pyramid_extrema,)
 
 
 @app.cell(hide_code=True)
-def _(image_2, image_2_levels, mo, plt, pyramid_error, sigmas):
+def _(
+    image_2,
+    image_2_levels,
+    mo,
+    plt,
+    pyramid_error,
+    pyramid_extrema,
+    sigmas,
+):
     try:
         if pyramid_error:
             raise RuntimeError(pyramid_error)
@@ -887,7 +1120,8 @@ def to_original(points, factor):
     import numpy as np
 
     # EDIT BELOW
-    mapped = ...
+    pointsArray = np.asarray(points)
+    mapped = pointsArray * factor
 
     return mapped
 
