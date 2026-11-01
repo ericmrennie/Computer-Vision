@@ -254,7 +254,14 @@
     {
       "id": "DnEU",
       "code_hash": "4b7371a07279cb0d6c3bfbc00361cd58",
-      "outputs": [],
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
       "console": []
     },
     {
@@ -273,7 +280,14 @@
     {
       "id": "ecfG",
       "code_hash": "c68a25e7e03aa81626a2e28f095de148",
-      "outputs": [],
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
       "console": []
     },
     {

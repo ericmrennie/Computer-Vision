@@ -1,8 +1,8 @@
-# Laplacian of Gaussian with a 9x9 Gaussian kernel and a Laplacian scale of 7. 
-# Gives topographic visuals
-
 #!/usr/bin/env python3
 # reference - OpenCV API docs python 
+
+# Laplacian of Gaussian with a 9x9 Gaussian kernel and a Laplacian scale of 7. 
+# Gives topographic visuals
 
 import cv2 as cv
 import numpy as np

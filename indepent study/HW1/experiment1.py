@@ -1,7 +1,7 @@
-# canny edge detector inverted. White pixels with edges in black. Gives more of a drawing feel. 
-
 #!/usr/bin/env python3
 # reference - OpenCV API docs python 
+
+# canny edge detector inverted. White pixels with edges in black. Gives more of a drawing feel. 
 
 import cv2 as cv
 import numpy as np

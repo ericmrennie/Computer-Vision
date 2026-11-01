@@ -1,8 +1,8 @@
-# Erode 75x75 cross with HSV. Creates large colorful crosses. 
-# This is another iteration of experiment3. Returns warmer colors.
-
 #!/usr/bin/env python3
 # reference - OpenCV API docs python 
+
+# Erode 75x75 cross with HSV. Creates large colorful crosses. 
+# This is another iteration of experiment3. Returns warmer colors.
 
 import cv2 as cv
 import numpy as np

@@ -223,7 +223,9 @@ def _(image_1, image_2, laplacian, np, sobel_x, sobel_y):
         padded_H = len(image) + (2*(len(kernel) - 1))
         padded_W = len(image[0]) + (2*(len(kernel[0]) - 1))
 
-        padded_image = [[0 for _ in range(padded_W)] for _ in range(padded_H)]
+        # everything below here is pretty difficult
+
+        padded_image = [[0 for _ in range(padded_W)] for _ in range(padded_H)] 
 
         # place the image inside the padded image
         for i in range(len(image)):

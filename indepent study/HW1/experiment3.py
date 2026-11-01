@@ -1,8 +1,8 @@
-# Erode 100x100 ellipse with HSV. Creates large colorful circles. 
-# Fun to interact with by shining light onto the camera and moving around.
-
 #!/usr/bin/env python3
 # reference - OpenCV API docs python 
+
+# Erode 100x100 ellipse with HSV. Creates large colorful circles. 
+# Fun to interact with by shining light onto the camera and moving around.
 
 import cv2 as cv
 import numpy as np
@@ -29,7 +29,7 @@ while True:
   frame = frame[::3, ::3, :] # downsample (nearest) // takes every third pixel. image is 1/3x1/3 as big
   
   frame = cv.erode(frame, SE)
-  frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+  #frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
   cv.imshow('frame', frame) # posts frame on the screen
 
   if cv.waitKey(1) & 0xFF == ord('q'): # quits

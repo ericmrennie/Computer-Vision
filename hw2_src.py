@@ -141,11 +141,11 @@ def _(structure_2):
 
         trace = a + c
         det = a * c - b * b
-        disc = trace * trace - 4 * det
+        disc = trace * trace - 4 * det # why
 
-        root = math.sqrt(max(disc, 0))
-        lam1 = (trace + root) / 2
-        lam2 = (trace - root) / 2
+        root = math.sqrt(max(disc, 0)) # why 
+        lam1 = (trace + root) / 2 # why 
+        lam2 = (trace - root) / 2 # why 
 
         if lam2 < -1e-9 or math.isnan(lam1) or math.isnan(lam2):
             return "invalid"
@@ -154,6 +154,8 @@ def _(structure_2):
         if lam2 < threshold:
             return "edge"
         return "corner"
+
+        # so lambda 2 is what tells us it's an edge? Why do we only test lambda 2 for invalidity
 
     print(classify_feature(structure_2))
     return (classify_feature,)
