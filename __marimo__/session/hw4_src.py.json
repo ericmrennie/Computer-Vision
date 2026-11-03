@@ -1,0 +1,792 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.25.1",
+    "script_metadata_hash": "b8e577dd545c893f5f66df267ab6a071"
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "1d0db38904205bec4d6f6f6a1f6cec3e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "52f11df380e338703c641dc96c4d67ae",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"homework-4-optical-flow\">Homework 4: Optical Flow</h1>\n<!--\n## Important notes\n\n- This homework covers Lecture 5, Motion and Optical Flow, Sections 5.4 to 5.13 of the notes. The appendices are not needed.\n\n- Do Problems 1 to 3 by hand, as you would on the exam. The numbers are chosen so that\nno calculator is needed. Show your steps.\n\n- In Problem 4 you write Lucas\u2013Kanade yourself, with NumPy, `scipy.ndimage` and\nmatplotlib. Do not use a library routine that computes optical flow or selects\nfeatures for you, such as OpenCV's `calcOpticalFlowPyrLK`,\n`calcOpticalFlowFarneback` or `goodFeaturesToTrack`.\n\n- Submit one PDF to Homework 4 on Gradescope, with pages assigned to problems, and\nyour code to the Homework 4 programming assignment. You may work with your study\ngroup, but write up your own solutions and list the group's members on the first\npage. AI tools may be used to clarify ideas and to debug, not to produce the solutions\nyou submit (see the syllabus). -->\n\n<span class=\"paragraph\"><strong>Submission Instructions.</strong> Your submission should be a zip file, containing at least this Marimo notebook (just like previous weeks) as well as handwritten work attached as a PDF (hw4.pdf) for the written questions.</span>\n<span class=\"paragraph\"><strong>Notation.</strong>  As in the notes, <marimo-tex class=\"arithmatex\">||(x||)</marimo-tex> runs to the right and <marimo-tex class=\"arithmatex\">||(y||)</marimo-tex> runs down. <marimo-tex class=\"arithmatex\">||((u,v)||)</marimo-tex> is\nthe motion from frame <marimo-tex class=\"arithmatex\">||(t||)</marimo-tex> to frame <marimo-tex class=\"arithmatex\">||(t+1||)</marimo-tex> in pixels, with <marimo-tex class=\"arithmatex\">||(u||)</marimo-tex> along <marimo-tex class=\"arithmatex\">||(x||)</marimo-tex> and <marimo-tex class=\"arithmatex\">||(v||)</marimo-tex> along <marimo-tex class=\"arithmatex\">||(y||)</marimo-tex>.\n<marimo-tex class=\"arithmatex\">||(I_t = I (x,y,t+1) - I (x,y,t)||)</marimo-tex> is the frame difference. Over a window, Lucas\u2013Kanade\nsolves <marimo-tex class=\"arithmatex\">||(\\mathtt{A} \\,\\mathbf{u} = -\\mathbf{b}||)</marimo-tex> with:</span>\n<marimo-tex class=\"arithmatex\">||[\n\\mathtt{A}  = \\begin{bmatrix} a_{11} &amp; a_{12} \\\\ a_{12} &amp; a_{22} \\end{bmatrix}\n      = \\begin{bmatrix} \\left\\langle I_x ^{2} \\right\\rangle &amp; \\left\\langle I_x I_y  \\right\\rangle \\\\ \\left\\langle I_x I_y  \\right\\rangle &amp; \\left\\langle I_y ^{2} \\right\\rangle \\end{bmatrix},\n||]</marimo-tex><marimo-tex class=\"arithmatex\">||[\n\\mathbf{b} = \\begin{bmatrix} b_1 \\\\ b_2 \\end{bmatrix}\n        = \\begin{bmatrix} \\left\\langle I_x  I_t \\right\\rangle \\\\ \\left\\langle I_y  I_t \\right\\rangle \\end{bmatrix},\n||]</marimo-tex><marimo-tex class=\"arithmatex\">||[\n\\begin{bmatrix} u \\\\ v \\end{bmatrix}\n = \\frac{1}{\\det\\mathtt{A} }\n   \\begin{bmatrix} -a_{22}\\, b_1 + a_{12}\\, b_2 \\\\ \\phantom{-}a_{12}\\, b_1 - a_{11}\\, b_2 \\end{bmatrix},\n||]</marimo-tex><span class=\"paragraph\">where the angle brackets are sums over the window (here with <marimo-tex class=\"arithmatex\">||(w = 1||)</marimo-tex>). The eigenvalues of\n<marimo-tex class=\"arithmatex\">||(\\mathtt{A}||)</marimo-tex> are:</span>\n<marimo-tex class=\"arithmatex\">||[\n\\lambda_{1,2} = \\tfrac12 \\operatorname{tr}\\mathtt{A} \\pm\n\\sqrt{(\\tfrac12 \\operatorname{tr}\\mathtt{A})^2 - \\det\\mathtt{A}},\n||]</marimo-tex><span class=\"paragraph\">with <marimo-tex class=\"arithmatex\">||(\\lambda_1 \\ge \\lambda_2||)</marimo-tex> (Lecture 3).</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "e1baf7fff9be79c6deba3d5aaa0f8ef3",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"problem-1-one-pixel-at-a-time\">Problem 1: One pixel at a time</h1></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "56757e4c053ddf9922b6387f221805d5",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"1a\">1(a)</h2>\n<span class=\"paragraph\">Start from brightness constancy,</span>\n<marimo-tex class=\"arithmatex\">||[\nI(x+u,\\, y+v,\\, t+1) = I(x,\\, y,\\, t),\n||]</marimo-tex><span class=\"paragraph\">and derive the optical flow constraint equation</span>\n<marimo-tex class=\"arithmatex\">||[\nI_x u + I_y v + I_t = 0,\n||]</marimo-tex><span class=\"paragraph\">with <marimo-tex class=\"arithmatex\">||(I_t||)</marimo-tex> the frame difference. Say which step is an approximation, and when that approximation is good.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "d148cf79f9c695c2a9defb03fd1c5ec3",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Your answer to Problem 1(a).</strong></span>\n<span class=\"paragraph\">Brightness constancy says a point keeps its brightness as it moves:</span>\n<span class=\"paragraph\">I(x+u, y+v, t+1) = I(x, y, t)</span>\n<span class=\"paragraph\">The unknowns u and v sit inside the image function, so we linearize with a first-order Taylor expansion. Starting from the brightness at (x, y) in frame t+1, we add the slope times the step in each direction, where I_x and I_y are the spatial derivatives of the image:</span>\n<span class=\"paragraph\">I(x+u, y+v, t+1) \u2248 I(x, y, t+1) + I_x u + I_y v</span>\n<span class=\"paragraph\">Frame t+1 equals frame t plus the frame difference, I_t = I(x, y, t+1) \u2212 I(x, y, t). This is exact:</span>\n<span class=\"paragraph\">I(x, y, t+1) = I(x, y, t) + I_t</span>\n<span class=\"paragraph\">Substituting:</span>\n<span class=\"paragraph\">I(x+u, y+v, t+1) \u2248 I(x, y, t) + I_x u + I_y v + I_t</span>\n<span class=\"paragraph\">By brightness constancy the left side equals I(x, y, t), so:</span>\n<span class=\"paragraph\">I(x, y, t) \u2248 I(x, y, t) + I_x u + I_y v + I_t</span>\n<span class=\"paragraph\">The I(x, y, t) terms cancel, leaving the optical flow constraint equation:</span>\n<span class=\"paragraph\">I_x u + I_y v + I_t = 0</span>\n<span class=\"paragraph\">Which step is the approximation? Only the first-order Taylor expansion. Rewriting frame t+1 as frame t plus I_t is exact.</span>\n<span class=\"paragraph\">When is it good? When the motion is small (about a pixel or less in a sharp image). For larger motions the brightness no longer varies linearly over the step, so the linear approximation breaks down.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "53f10b405191ebeaf9432f4ed7a64beb",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"1b\">1(b)</h2>\n<span class=\"paragraph\">At one pixel, <marimo-tex class=\"arithmatex\">||(I_x  = 8||)</marimo-tex>, <marimo-tex class=\"arithmatex\">||(I_y  = 6||)</marimo-tex> and <marimo-tex class=\"arithmatex\">||(I_t = -20||)</marimo-tex>.</span>\n<ol>\n<li>Write the constraint line and sketch it in the <marimo-tex class=\"arithmatex\">||((u,v)||)</marimo-tex> plane. Mark where it crosses\n   the two axes.</li>\n<li>Show that the motions <marimo-tex class=\"arithmatex\">||((1, 2)||)</marimo-tex> and <marimo-tex class=\"arithmatex\">||((4, -2)||)</marimo-tex> both lie on the line, and find a third.</li>\n<li>Find the normal flow and its length.</li>\n<li>In which direction does the edge through this pixel run? The true motion is\n   <marimo-tex class=\"arithmatex\">||((1, 2)||)</marimo-tex>. Split it into a part across the edge and a part along the edge. Which part\n   does this pixel measure?</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "b044f07579613705e5539f9b95d4de85",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Your answer to Problem 1(b).</strong></span>\n<span class=\"paragraph\">You may either write your response here in LaTeX (if you are concerned your handwriting is illegible), or include your written response in the attached PDF. If your response is in the attached PDF, please indicate so here. You may (and should) clear all of the content in this cell.</span>\n<ol>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "a2bf08467763fc49a51b4e8ff8b1cd3e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"1c\">1(c)</h2>\n<span class=\"paragraph\"><em>The barber pole again.</em> A pattern of straight stripes moves to the right\nby <marimo-tex class=\"arithmatex\">||((u, v) = (2, 0)||)</marimo-tex> pixels per frame. At a pixel on the side of one stripe the gradient is\n<marimo-tex class=\"arithmatex\">||(\\nabla I  = (3, -3)||)</marimo-tex>.</span>\n<ol>\n<li>Use the constraint equation to find the frame difference <marimo-tex class=\"arithmatex\">||(I_t||)</marimo-tex> at this pixel.</li>\n<li>What normal flow does a small window around this pixel measure? Give its direction\n   and its length.</li>\n<li>In which direction do the stripes run? Explain why the pattern, seen through a small\n   window, seems to move in a different direction from its true motion. How does this\n   explain the barber pole of Lecture 5?</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "b1a0f3a6f9e9506d3c2b6fb5279af419",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Your answer to Problem 1(c).</strong></span>\n<span class=\"paragraph\">You may either write your response here in LaTeX (if you are concerned your handwriting is illegible), or include your written response in the attached PDF. If your response is in the attached PDF, please indicate so here. You may (and should) clear all of the content in this cell.</span>\n<ol>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "b8d32e719d0c6393d84c42ff872086f7",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"problem-2-lucaskanade-by-hand\">Problem 2: Lucas\u2013Kanade by hand</h1></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "18aebd2ffcfba31a7261120ddb02b921",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"2a\">2(a)</h2>\n<span class=\"paragraph\">A <marimo-tex class=\"arithmatex\">||(3\\times3||)</marimo-tex> window with <marimo-tex class=\"arithmatex\">||(w = 1||)</marimo-tex> has these derivatives at its nine pixels\n(rows from top to bottom):</span>\n<marimo-tex class=\"arithmatex\">||[\nI_x  = \\begin{bmatrix} 0&amp;0&amp;0\\\\ 1&amp;2&amp;0\\\\ 1&amp;2&amp;0 \\end{bmatrix},\n||]</marimo-tex><marimo-tex class=\"arithmatex\">||[\nI_y  = \\begin{bmatrix} 0&amp;1&amp;1\\\\ 0&amp;2&amp;2\\\\ 0&amp;0&amp;0 \\end{bmatrix},\n||]</marimo-tex><marimo-tex class=\"arithmatex\">||[\nI_t = \\begin{bmatrix} \\phantom{-}0&amp;\\phantom{-}1&amp;1\\\\ -1&amp;\\phantom{-}0&amp;2\\\\ -1&amp;-2&amp;0 \\end{bmatrix}.\n||]</marimo-tex><ol>\n<li>Compute <marimo-tex class=\"arithmatex\">||(a_{11}||)</marimo-tex>, <marimo-tex class=\"arithmatex\">||(a_{12}||)</marimo-tex>, <marimo-tex class=\"arithmatex\">||(a_{22}||)</marimo-tex>, <marimo-tex class=\"arithmatex\">||(b_1||)</marimo-tex> and <marimo-tex class=\"arithmatex\">||(b_2||)</marimo-tex>.</li>\n<li>Solve for <marimo-tex class=\"arithmatex\">||((u, v)||)</marimo-tex>.</li>\n<li>Find the eigenvalues of <marimo-tex class=\"arithmatex\">||(\\mathtt{A}||)</marimo-tex>. Is the window flat, edge-like or corner-like?</li>\n<li>Check that your <marimo-tex class=\"arithmatex\">||((u,v)||)</marimo-tex> satisfies the constraint equation at every pixel of the window.</li>\n<li>At the center pixel <marimo-tex class=\"arithmatex\">||(I_t = 0||)</marimo-tex>. Does this mean that the center pixel did not move?\n   Explain with the constraint equation at that pixel.</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "ded4835aab01e6b796f22d084482b0e5",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Your answer to Problem 2(a).</strong></span>\n<span class=\"paragraph\">You may either write your response here in LaTeX (if you are concerned your handwriting is illegible), or include your written response in the attached PDF. If your response is in the attached PDF, please indicate so here. You may (and should) clear all of the content in this cell.</span>\n<ol>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "1644228f2e635785c6eb17b276296183",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"2b\">2(b)</h2>\n<span class=\"paragraph\">A second <marimo-tex class=\"arithmatex\">||(3\\times3||)</marimo-tex> window, with <marimo-tex class=\"arithmatex\">||(w = 1||)</marimo-tex>, lies on a straight edge. Its\nderivatives are</span>\n<marimo-tex class=\"arithmatex\">||[\nI_x  = I_y  = \\begin{bmatrix} 0&amp;1&amp;2\\\\ 1&amp;2&amp;1\\\\ 2&amp;1&amp;0 \\end{bmatrix},\n||]</marimo-tex><marimo-tex class=\"arithmatex\">||[\nI_t = -\\begin{bmatrix} 0&amp;1&amp;2\\\\ 1&amp;2&amp;1\\\\ 2&amp;1&amp;0 \\end{bmatrix}.\n||]</marimo-tex><ol>\n<li>Compute <marimo-tex class=\"arithmatex\">||(\\mathtt{A}||)</marimo-tex>, <marimo-tex class=\"arithmatex\">||(\\mathbf{b}||)</marimo-tex>, <marimo-tex class=\"arithmatex\">||(\\det\\mathtt{A}||)</marimo-tex> and the eigenvalues of <marimo-tex class=\"arithmatex\">||(\\mathtt{A}||)</marimo-tex>.</li>\n<li>Show that the two equations of <marimo-tex class=\"arithmatex\">||(\\mathtt{A} \\,\\mathbf{u} = -\\mathbf{b}||)</marimo-tex> are the same equation.\n   Describe all the motions that fit this window equally well.</li>\n<li>Find the motion of part (ii) closest to <marimo-tex class=\"arithmatex\">||((0, 0)||)</marimo-tex>. Show that it equals the normal flow\n   at the center pixel.</li>\n<li>The true motion was <marimo-tex class=\"arithmatex\">||((1.5, -0.5)||)</marimo-tex>. In which direction does the edge run? Which part\n   of the true motion did the window recover, and which part was lost?</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "nWHF",
+      "code_hash": "55354de57fa0efd61f8513777f8ff6b2",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Your answer to Problem 2(b).</strong></span>\n<span class=\"paragraph\">You may either write your response here in LaTeX (if you are concerned your handwriting is illegible), or include your written response in the attached PDF. If your response is in the attached PDF, please indicate so here. You may (and should) clear all of the content in this cell.</span>\n<ol>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "iLit",
+      "code_hash": "8a64336b30c87364efb5dc405a34b605",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"2c\">2(c)</h2>\n<span class=\"paragraph\">Two windows have</span>\n<marimo-tex class=\"arithmatex\">||[\n\\mathtt{A} _P = \\begin{bmatrix} 10 &amp; 0 \\\\ 0 &amp; 10 \\end{bmatrix}\n||]</marimo-tex><span class=\"paragraph\">and</span>\n<marimo-tex class=\"arithmatex\">||[\n\\mathtt{A} _Q = \\begin{bmatrix} 100 &amp; 0 \\\\ 0 &amp; 1 \\end{bmatrix}.\n||]</marimo-tex><ol>\n<li>Give the eigenvalues and the determinant of each matrix. Which window is on a corner\n   and which is on an edge? In which direction does that edge run?</li>\n<li>Noise changes <marimo-tex class=\"arithmatex\">||(\\mathbf{b}||)</marimo-tex> by <marimo-tex class=\"arithmatex\">||(\\delta\\mathbf{b} = (0.5, 0.5)^{\\mathsf{T}}||)</marimo-tex> in both windows. By how much,\n   and in which direction, does the solution <marimo-tex class=\"arithmatex\">||((u,v)||)</marimo-tex> change in each window?</li>\n<li>One tracker accepts a window when <marimo-tex class=\"arithmatex\">||(\\det\\mathtt{A}  &gt; 50||)</marimo-tex>. Another accepts it when\n   <marimo-tex class=\"arithmatex\">||(\\lambda_2 &gt; 5||)</marimo-tex>. Which windows does each tracker accept? Which test is better, and why?</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ZHCJ",
+      "code_hash": "8e8bf14da3cab56e649dad8de7329057",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Your answer to Problem 2(c).</strong></span>\n<span class=\"paragraph\">You may either write your response here in LaTeX (if you are concerned your handwriting is illegible), or include your written response in the attached PDF. If your response is in the attached PDF, please indicate so here. You may (and should) clear all of the content in this cell.</span>\n<ol>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ROlb",
+      "code_hash": "b27248e40358a5508154c58ba7c83319",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"problem-3-time-to-collision-and-the-focus-of-expansion\">Problem 3: Time to collision and the focus of expansion</h1></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "qnkX",
+      "code_hash": "7c10fca871ea9038b1212d3775b34766",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"3a\">3(a)</h2>\n<span class=\"paragraph\">An object of size <marimo-tex class=\"arithmatex\">||(L||)</marimo-tex> at distance <marimo-tex class=\"arithmatex\">||(D(t)||)</marimo-tex> from a pinhole camera with focal\nlength <marimo-tex class=\"arithmatex\">||(f||)</marimo-tex> has an image of size <marimo-tex class=\"arithmatex\">||(l(t) = fL/D(t)||)</marimo-tex>. Show that <marimo-tex class=\"arithmatex\">||(l/\\dot l = -D/\\dot D||)</marimo-tex>. Which\nquantities cancel? Under what conditions is <marimo-tex class=\"arithmatex\">||(\\tau = -D/\\dot D||)</marimo-tex> the time until the object\nreaches the camera's plane?</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "TqIu",
+      "code_hash": "f0cd1d4246d203a625d08290cd2b983f",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Your answer to Problem 3(a).</strong></span>\n<span class=\"paragraph\">You may either write your response here in LaTeX (if you are concerned your handwriting is illegible), or include your written response in the attached PDF. If your response is in the attached PDF, please indicate so here. You may (and should) clear all of the content in this cell.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Vxnm",
+      "code_hash": "f44b887f17aaa14bc4a6df003b4ce2a7",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"3b\">3(b)</h2>\n<span class=\"paragraph\">You follow a truck on a straight road. Its image width grows from 60 to 62\npixels between two consecutive frames, at 30 frames per second, and the closing speed is\nconstant.</span>\n<ol>\n<li>What is the time to collision at the second frame, in frames and in seconds? What is\n   it at the first frame?</li>\n<li>The closing speed is 4 m/s. How far away is the truck at the second frame? Could you\n   have found this distance from the two images alone?</li>\n<li>Suppose the camera zoomed in slightly between the two frames. Could you still use\n   your estimate? Explain.</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "DnEU",
+      "code_hash": "90fc24597145612e78549f6b16d1b39c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Your answer to Problem 3(b).</strong></span>\n<span class=\"paragraph\">You may either write your response here in LaTeX (if you are concerned your handwriting is illegible), or include your written response in the attached PDF. If your response is in the attached PDF, please indicate so here. You may (and should) clear all of the content in this cell.</span>\n<ol>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ulZA",
+      "code_hash": "6928e463f865e19578c1a6a0c54214eb",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"3c\">3(c)</h2>\n<span class=\"paragraph\">A camera moves straight toward a flat wall that faces it, without turning.\nThree points on the wall have these positions in frame <marimo-tex class=\"arithmatex\">||(t||)</marimo-tex> and these flows to frame <marimo-tex class=\"arithmatex\">||(t+1||)</marimo-tex>\n(in pixels and pixels per frame):</span>\n<table>\n<thead>\n<tr>\n<th>Point</th>\n<th>Position <marimo-tex class=\"arithmatex\">||((x, y)||)</marimo-tex></th>\n<th>Flow <marimo-tex class=\"arithmatex\">||((u, v)||)</marimo-tex></th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>A</td>\n<td><marimo-tex class=\"arithmatex\">||((420, 290)||)</marimo-tex></td>\n<td><marimo-tex class=\"arithmatex\">||((2, 1)||)</marimo-tex></td>\n</tr>\n<tr>\n<td>B</td>\n<td><marimo-tex class=\"arithmatex\">||((170, 290)||)</marimo-tex></td>\n<td><marimo-tex class=\"arithmatex\">||((-3, 1)||)</marimo-tex></td>\n</tr>\n<tr>\n<td>C</td>\n<td><marimo-tex class=\"arithmatex\">||((300, 90)||)</marimo-tex></td>\n<td><marimo-tex class=\"arithmatex\">||((-0.4, -3)||)</marimo-tex></td>\n</tr>\n</tbody>\n</table>\n<ol>\n<li>Use A and B with <marimo-tex class=\"arithmatex\">||(u = (x - x_0)/\\tau||)</marimo-tex> and <marimo-tex class=\"arithmatex\">||(v = (y - y_0)/\\tau||)</marimo-tex> to find the focus of\n   expansion <marimo-tex class=\"arithmatex\">||((x_0, y_0)||)</marimo-tex> and the time to collision <marimo-tex class=\"arithmatex\">||(\\tau||)</marimo-tex>. Check your answer with C.</li>\n<li>The video runs at 25 frames per second. How many seconds remain until the camera\n   reaches the wall?</li>\n<li>A lamp post stands between the camera and the wall. A point on it, at <marimo-tex class=\"arithmatex\">||((370, 340)||)</marimo-tex>,\n   moves by <marimo-tex class=\"arithmatex\">||((2, 4)||)</marimo-tex>. What flow would a point of the wall at the same position have?\n   How does the depth of the post compare with the depth of the wall?</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ecfG",
+      "code_hash": "eb8bde6e0daaafe3add38b7a6f64a394",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Your answer to Problem 3(c).</strong></span>\n<span class=\"paragraph\">You may either write your response here in LaTeX (if you are concerned your handwriting is illegible), or include your written response in the attached PDF. If your response is in the attached PDF, please indicate so here. You may (and should) clear all of the content in this cell.</span>\n<ol>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Pvdt",
+      "code_hash": "e2ee3b4ee5196cbc8121f26aedfc691a",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"problem-4-lucaskanade-from-scratch\">Problem 4: Lucas\u2013Kanade from scratch</h1>\n<span class=\"paragraph\">In this problem you write Lucas\u2013Kanade, test it on frames whose motion is known, and then\nuse it on two frames of the drive from Lecture 5. Verify that you have the following five images in a directory <code>data/hw4/</code>.</span>\n<table>\n<thead>\n<tr>\n<th>File</th>\n<th>Contents</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>board_t0.png</code></td>\n<td>frame <marimo-tex class=\"arithmatex\">||(t||)</marimo-tex>: the lab board of Lectures 4 and 5, <marimo-tex class=\"arithmatex\">||(640\\times480||)</marimo-tex>, gray</td>\n</tr>\n<tr>\n<td><code>board_t1_small.png</code></td>\n<td>frame <marimo-tex class=\"arithmatex\">||(t+1||)</marimo-tex>: the board moved by <marimo-tex class=\"arithmatex\">||((u,v) = (0.6,\\ 0.45)||)</marimo-tex> pixels</td>\n</tr>\n<tr>\n<td><code>board_t1_large.png</code></td>\n<td>frame <marimo-tex class=\"arithmatex\">||(t+1||)</marimo-tex>: the board moved by <marimo-tex class=\"arithmatex\">||((u,v) = (6.0,\\ 4.5)||)</marimo-tex> pixels</td>\n</tr>\n<tr>\n<td><code>jeep_t0.png</code></td>\n<td>frame 170 of the drive, cropped to the scene ahead, <marimo-tex class=\"arithmatex\">||(500\\times340||)</marimo-tex>, color</td>\n</tr>\n<tr>\n<td><code>jeep_t1.png</code></td>\n<td>frame 171, cropped the same way</td>\n</tr>\n</tbody>\n</table>\n<span class=\"paragraph\">The board frames were made by moving the photograph by an exact amount, which need not be a\nwhole number of pixels, and adding a small amount of noise to each frame. The true flow is\ntherefore known at every pixel.</span>\n<span class=\"paragraph\"><strong>Settings.</strong>  Use the settings of the notes throughout. Blur each frame lightly with\na Gaussian before taking derivatives (the notebook gives <marimo-tex class=\"arithmatex\">||(\\sigma||)</marimo-tex>). For <marimo-tex class=\"arithmatex\">||(I_x||)</marimo-tex> and <marimo-tex class=\"arithmatex\">||(I_y||)</marimo-tex>, take\ncentral differences of frame <marimo-tex class=\"arithmatex\">||(t||)</marimo-tex> divided by 2, as in the notes:</span>\n<marimo-tex class=\"arithmatex\">||[\nI_x = \\big(I(x{+}1, y) - I(x{-}1, y)\\big)/2.\n||]</marimo-tex><span class=\"paragraph\">Use the frame difference for <marimo-tex class=\"arithmatex\">||(I_t||)</marimo-tex> and a\n<marimo-tex class=\"arithmatex\">||(7\\times7||)</marimo-tex> window with <marimo-tex class=\"arithmatex\">||(w = 1||)</marimo-tex>. Intensities are in <marimo-tex class=\"arithmatex\">||([0, 1]||)</marimo-tex>. Positions are <marimo-tex class=\"arithmatex\">||((x, y)||)</marimo-tex>, with <marimo-tex class=\"arithmatex\">||(x||)</marimo-tex>\nalong a row and <marimo-tex class=\"arithmatex\">||(y||)</marimo-tex> down, so pixel <marimo-tex class=\"arithmatex\">||((x, y)||)</marimo-tex> is <code>I[y, x]</code>. (Homework 3 used\n<code>(row, col)</code>.) Implement <code>lk_point</code> for the one-step estimate at a single point in\npart (a), <code>grid_optical_flow</code> for the grid of one-step estimates in part (b), and\n<code>optical_flow</code> for the iterative, pyramidal flow field in part (c). You may reuse\nyour code from Homework 3 where useful. In <code>optical_flow</code>, follow Section 5.10:\nat each pyramid level, from the top down, sample frame <marimo-tex class=\"arithmatex\">||(t+1||)</marimo-tex> at the window's pixels moved by\nthe current estimate, form <marimo-tex class=\"arithmatex\">||(I_t||)</marimo-tex> and <marimo-tex class=\"arithmatex\">||(\\mathbf{b}||)</marimo-tex>, solve for the correction, and repeat. Going\ndown one level, double the estimate.</span>\n<span class=\"paragraph\"><strong>Implementation conventions.</strong> For a multichannel image in <marimo-tex class=\"arithmatex\">||([0, 1]||)</marimo-tex>, convert to\ngrayscale with <code>Image.fromarray((image * 255).astype(np.uint8)).convert(\"L\")</code>,\nthen convert the result to floating point and divide by 255. For smoothing, use\n<code>scipy.ndimage.gaussian_filter(image, sigma, mode=\"reflect\", truncate=4.0)</code>.\nYou may ignore all boundary effects.</span>\n<span class=\"paragraph\">We have provided the image loading, function calls, and results table for part (a),\nthe motion-comparison table for part (c), and the function calls, visualizations,\nand focus-of-expansion fitting for part (d).</span>\n<span class=\"paragraph\"><strong>What to submit.</strong> The functions are checked by the autograder. Submit the completed notebook to the\nHomework 4 programming assignment on Gradescope. The tables, plots and answers of parts (a)\nto (d) go in the PDF, part by part.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ZBYS",
+      "code_hash": "3e7cc53016ed4cbdc63342bbe67bd607",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "aLJB",
+      "code_hash": "4379b9aa83a1381b0e0b694bbfd30803",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Figure 1: Left: frame <marimo-tex class=\"arithmatex\">||(t||)</marimo-tex> of the board, with the three windows of part (a), centered at the\npixels given as <marimo-tex class=\"arithmatex\">||((x, y)||)</marimo-tex>. Right: frame <marimo-tex class=\"arithmatex\">||(t||)</marimo-tex> of the drive, for part (d). The next frame is\n<marimo-tex class=\"arithmatex\">||(1/24||)</marimo-tex> second later.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "nHfw",
+      "code_hash": "bd546e3a3ba4e20d7a1e604b46ef590c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"4a\">4(a)</h2>\n<span class=\"paragraph\"><em>One window at a time.</em> Run one Lucas\u2013Kanade step (one iteration, no\npyramid) from <code>board_t0.png</code> to <code>board_t1_small.png</code> at the three windows of\nFigure 1. We have provided code to display a table with <marimo-tex class=\"arithmatex\">||(a_{11}||)</marimo-tex>, <marimo-tex class=\"arithmatex\">||(a_{12}||)</marimo-tex>, <marimo-tex class=\"arithmatex\">||(a_{22}||)</marimo-tex>, <marimo-tex class=\"arithmatex\">||(\\lambda_1||)</marimo-tex>,\n<marimo-tex class=\"arithmatex\">||(\\lambda_2||)</marimo-tex>, <marimo-tex class=\"arithmatex\">||(\\lambda_2/\\lambda_1||)</marimo-tex>, the estimate <marimo-tex class=\"arithmatex\">||((u,v)||)</marimo-tex> and its error\n<marimo-tex class=\"arithmatex\">||(\\left\\lVert (u,v) - (0.6,\\, 0.45) \\right\\rVert||)</marimo-tex>, one row per window. Give <marimo-tex class=\"arithmatex\">||(a_{11}||)</marimo-tex>, <marimo-tex class=\"arithmatex\">||(a_{12}||)</marimo-tex>, <marimo-tex class=\"arithmatex\">||(a_{22}||)</marimo-tex> and the\neigenvalues in units of <marimo-tex class=\"arithmatex\">||(10^{-3}||)</marimo-tex>. Explain each result with the eigenvalues, in two or three\nsentences. For the edge window, which component of the estimate is wrong, and why?</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "xXTn",
+      "code_hash": "d54dcd8f533bc5ba355493a9fd2de380",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Your answer to Problem 4(a).</strong></span>\n<span class=\"paragraph\">You may either write your response here in LaTeX (if you are concerned your handwriting is illegible), or include your written response in the attached PDF. If your response is in the attached PDF, please indicate so here. You may (and should) clear all of the content in this cell.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "AjVT",
+      "code_hash": "81fdbd970648e4ac83e012cfc2db7445",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "pHFh",
+      "code_hash": "6ec4b764120b9cf94ad175fd2cd97541",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "NCOB",
+      "code_hash": "249104e73951e0b39aaea2fb69712272",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "aqbW",
+      "code_hash": "fe1d27797db1d66279fa08be481fd45c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"4b\">4(b)</h2>\n<span class=\"paragraph\"><em>Which windows can be trusted.</em> Run one step at the windows centered on a\ngrid of points 16 pixels apart, starting 16 pixels from the border, which gives 1131 windows.\nClassify the windows by their eigenvalues:</span>\n<ul>\n<li><em>corner-like</em> if <marimo-tex class=\"arithmatex\">||(\\lambda_2||)</marimo-tex> is in the top 15% of the grid windows (at or above\n   the 85th percentile of <marimo-tex class=\"arithmatex\">||(\\lambda_2||)</marimo-tex>);</li>\n<li><em>flat</em> if <marimo-tex class=\"arithmatex\">||(\\lambda_1||)</marimo-tex> is in the bottom 40% (below the 40th percentile of\n   <marimo-tex class=\"arithmatex\">||(\\lambda_1||)</marimo-tex>);</li>\n<li><em>edge-like</em> if it is neither of these and <marimo-tex class=\"arithmatex\">||(\\lambda_2 &lt; 0.05\\,\\lambda_1||)</marimo-tex>.</li>\n</ul>\n<span class=\"paragraph\">Windows in none of the three classes are not used. Report:</span>\n<ol>\n<li>the number of windows in each class and the median error of each class;</li>\n<li><code>board_t0.png</code> with the estimate drawn as an arrow at every corner-like and\n   edge-like window, in two colors, about 10 times longer than the motion, and a dot at\n   every flat window;</li>\n<li>every estimate as a point in the <marimo-tex class=\"arithmatex\">||((u,v)||)</marimo-tex> plane, colored by class, with the true motion\n   marked (draw <marimo-tex class=\"arithmatex\">||(v||)</marimo-tex> increasing downward, as in the image);</li>\n<li>in two or three sentences, where the edge-like estimates lie in the <marimo-tex class=\"arithmatex\">||((u,v)||)</marimo-tex> plane, and\n   why.</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "TRpd",
+      "code_hash": "970b19683debf532a36ca4881ca586ec",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Your answer to Problem 4(b).</strong></span>\n<span class=\"paragraph\">You may either write your response here in LaTeX (if you are concerned your handwriting is illegible), or include your written response in the attached PDF. If your response is in the attached PDF, please indicate so here. You may (and should) clear all of the content in this cell.</span>\n<ol>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "TXez",
+      "code_hash": "f3ede6829f081009bd023bf41b18ff59",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "dNNg",
+      "code_hash": "67144c62ab72a39af93ce3ecd5e791f3",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "yCnT",
+      "code_hash": "a50ef07543aef7449c215304fc5aed33",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "wlCL",
+      "code_hash": "9a71e975248cba84fd17a93174ece116",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"4c\">4(c)</h2>\n<span class=\"paragraph\"><em>Large motions.</em> Use the corner-like windows of part (b). For each of the\ntwo motions, find the median error of one step, and of 5 iterations per level with 0, 1, 2\nand 3 halvings (0 halvings is full resolution only). We have provided code to display the ten numbers in one table, with\na row for each motion. Then answer, briefly:</span>\n<ol>\n<li>Why does one step fail on the large motion, even at corners? Compare its median error\n   with the size of the motion, 7.5 pixels.</li>\n<li>Why do iterations at full resolution not fix it?</li>\n<li>How many halvings does the large motion need? Compare with the rule of thumb of\n   Section 5.9, that a few iterations handle about 2 pixels.</li>\n<li>Do the iterations help the small motion too? Why?</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "kqZH",
+      "code_hash": "fd509b3c217f44bd5a9c66d5de21e3ce",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Your answer to Problem 4(c).</strong></span>\n<span class=\"paragraph\">You may either write your response here in LaTeX (if you are concerned your handwriting is illegible), or include your written response in the attached PDF. If your response is in the attached PDF, please indicate so here. You may (and should) clear all of the content in this cell.</span>\n<ol>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "wAgl",
+      "code_hash": "15bbecd6f4e4dbbf3fca0b4b9d48887e",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "rEll",
+      "code_hash": "9c88e16a2c770d1a6613c191dce1adb8",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "dGlV",
+      "code_hash": "16273862a4ea35958d1914755a0be9c0",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "SdmI",
+      "code_hash": "051f22b8b10e13778181b7b8b58ac9fa",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"4d\">4(d)</h2>\n<span class=\"paragraph\"><em>Flow on a real video.</em> <code>jeep_t0.png</code> and <code>jeep_t1.png</code> are\nframes 170 and 171 of my video of a drive toward an airstrip (Section 5.12), cropped to the\nscene ahead of the jeep (Figure 1, right). Here the motion is not known.</span>\n<ol>\n<li>Compute <marimo-tex class=\"arithmatex\">||(\\lambda_2||)</marimo-tex> for the windows of the same kind of grid on the gray frame <marimo-tex class=\"arithmatex\">||(t||)</marimo-tex>\n   (600 windows), and keep the textured half: the windows with <marimo-tex class=\"arithmatex\">||(\\lambda_2||)</marimo-tex> at or above\n   the median.</li>\n<li>Track these points with 5 iterations per level and 3 halvings.</li>\n<li>Plot <code>jeep_t0.png</code> with the flow drawn as arrows, twice as long as the motion.</li>\n<li>We have provided code to fit the focus of expansion and refit twice, each time without\n   the 20% of the vectors with the largest angle between the vector and the direction\n   away from the current estimate. The provided plot marks the final focus of expansion.\n   Report its <marimo-tex class=\"arithmatex\">||((x, y)||)</marimo-tex> location together with the median of that angle over all the vectors.</li>\n<li>Answer in a few sentences. Why are there no arrows in the sky? Which arrows are the\n   longest, and why? Where is the jeep heading?</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lgWD",
+      "code_hash": "a12d69035e329379364912e962cfd517",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Your answer to Problem 4(d).</strong></span>\n<span class=\"paragraph\">You may either write your response here in LaTeX (if you are concerned your handwriting is illegible), or include your written response in the attached PDF. If your response is in the attached PDF, please indicate so here. You may (and should) clear all of the content in this cell.</span>\n<ol>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "yOPj",
+      "code_hash": "8e134795d56fa5701c95714cb8aa58e6",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "fwwy",
+      "code_hash": "02fc4a1724ae8198cc1911a2d49fc8c0",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "LJZf",
+      "code_hash": "eee01cbc74ad8584b92cb6494fce90ff",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "urSm",
+      "code_hash": "47ab07a23602a6fd154da3f9362f58e3",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "jxvo",
+      "code_hash": "d4b18245c80d18e5f1053d19c6ccbc64",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "mWxS",
+      "code_hash": "71ca57b961b4b1aeab8b494430d4fc1e",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "CcZR",
+      "code_hash": "179e0282e649a8b2f12a50a820c63674",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "YWSi",
+      "code_hash": "85369a791847b9e8a16e6ed52a59f09a",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "zlud",
+      "code_hash": "fbb8d936bc81369f3c9d024f3226096d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"problem-5-optical-flow-for-tracking\">Problem 5: Optical Flow for Tracking</h1>\n<span class=\"paragraph\">One application of optical flow is for tracking points in video sequences. In this exercise, you will use your optical flow function to track keypoints in the video sequence displayed below.</span>\n<span class=\"paragraph\">Round keypoint coordinates to the nearest pixel when sampling the flow field, and convert multichannel images to grayscale using PIL's <code>convert(\"L\")</code>.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "tZnO",
+      "code_hash": "d7ceed5d3f0e43cf779cf1e42cfe8ee4",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "xvXZ",
+      "code_hash": "f38ebd43c413d2faafb9632c26e7407c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"5a\">5(a)</h2>\n<span class=\"paragraph\">Start by extracting keypoint proposals. We'll use OpenCV's implementation of SIFT to do this using <code>cv2.SIFT_create</code>. Read the documentation for the function, then implement the <code>extract_keypoints</code> function below, which should return a numpy array of shape (N, 2), where N is the maximum number of keypoints retained. We provide the visualization code for the SIFT keypoints in the cells below.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "CLip",
+      "code_hash": "7b07008b8607e0c2a655793fe9f05e0c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Your answer to Problem 5(a).</strong></span>\n<span class=\"paragraph\">You may either write your response here in LaTeX (if you are concerned your handwriting is illegible), or include your written response in the attached PDF. If your response is in the attached PDF, please indicate so here. You may (and should) clear all of the content in this cell.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "YECM",
+      "code_hash": "99b5b84a73fb846a3bd20eadf4f64f2f",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "cEAS",
+      "code_hash": "78c4cc5d9fddce8e3f45faaccbfcfac7",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "iXej",
+      "code_hash": "5717eea70832bafa535c93fab77e0f37",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "EJmg",
+      "code_hash": "961e1a32b748704dc790b91efbd8496c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"5b\">5(b)</h2>\n<span class=\"paragraph\">Given a sequence of <marimo-tex class=\"arithmatex\">||(K||)</marimo-tex> images and a maximum keypoint count <code>n</code>, implement <code>track_forward</code> using the following algorithm:</span>\n<ol>\n<li>Call your <code>extract_keypoints</code> function from part (a) to extract at most <code>n</code> keypoints on the first image <marimo-tex class=\"arithmatex\">||(I_0||)</marimo-tex> of the sequence. We will refer to this as <marimo-tex class=\"arithmatex\">||(P_0||)</marimo-tex> which has a shape of <marimo-tex class=\"arithmatex\">||((N, 2)||)</marimo-tex> for some <marimo-tex class=\"arithmatex\">||(N \\le n||)</marimo-tex>.</li>\n<li>Use the optical flow function you defined in Problem 4 to compute the <marimo-tex class=\"arithmatex\">||((u, v)||)</marimo-tex> flow vector at each keypoint <marimo-tex class=\"arithmatex\">||((x_i, y_i)||)</marimo-tex> in <marimo-tex class=\"arithmatex\">||(I_0||)</marimo-tex>. Then, estimate the keypoint's new position <marimo-tex class=\"arithmatex\">||((x_f, y_f) \\approx (x_i + u, y_i + v)||)</marimo-tex>. We will refer to these tracked keypoints at frame 1 as <marimo-tex class=\"arithmatex\">||(P_1||)</marimo-tex> which also has a shape of <marimo-tex class=\"arithmatex\">||((N, 2)||)</marimo-tex>.</li>\n<li>Using the tracked keypoints at frame 1, <marimo-tex class=\"arithmatex\">||(P_1||)</marimo-tex>, compute the tracked keypoints at frame 2 <marimo-tex class=\"arithmatex\">||(P_2||)</marimo-tex>. Repeat this to compute <marimo-tex class=\"arithmatex\">||(P_3, P_4, ..., P_{K - 1}||)</marimo-tex>.</li>\n</ol>\n<span class=\"paragraph\">Your function should return <marimo-tex class=\"arithmatex\">||(K||)</marimo-tex> numpy arrays, each of shape <marimo-tex class=\"arithmatex\">||((N, 2)||)</marimo-tex> which store the locations of your tracked keypoints in each frame.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "UmEG",
+      "code_hash": "1eee9bcc9285c883b8f4d4aec3cc890d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Your answer to Problem 5(b).</strong></span>\n<span class=\"paragraph\">You may either write your response here in LaTeX (if you are concerned your handwriting is illegible), or include your written response in the attached PDF. If your response is in the attached PDF, please indicate so here. You may (and should) clear all of the content in this cell.</span>\n<ol>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vEBW",
+      "code_hash": "8a312159caaae0e07229d49b16bb5228",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "kLmu",
+      "code_hash": "d46d124b64545e0793970d4fdb3216a9",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "IpqN",
+      "code_hash": "5d01ac4ee5eb0ca4252596f1f505a5fd",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "dxZZ",
+      "code_hash": "2a8f096e5554bd4fe906a447c371dbbe",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "dlnW",
+      "code_hash": "a6dbccc76f00c481033f383a681f0690",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"5c\">5(c)</h2>\n<span class=\"paragraph\">Identify at least one <strong>major</strong> tracking error. Why does this happen using our algorithm?</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "TTti",
+      "code_hash": "fcb20662b9f4e0a7016d809d9ee94e0c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Your answer to Problem 5(c).</strong></span>\n<span class=\"paragraph\">You may either write your response here in LaTeX (if you are concerned your handwriting is illegible), or include your written response in the attached PDF. If your response is in the attached PDF, please indicate so here. You may (and should) clear all of the content in this cell.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RKFZ",
+      "code_hash": "41eddddaba0b343d6ce421331859f4cf",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"5d\">5(d)</h2>\n<span class=\"paragraph\">Let's refine our tracking algorithm. Implement the <code>track</code> function below, using the following algorithm:</span>\n<ol>\n<li>Compute <code>n</code> keypoints using OpenCV's SIFT implementation.</li>\n<li>Compute the \"forward\" optical flow from <marimo-tex class=\"arithmatex\">||(I_0||)</marimo-tex> to <marimo-tex class=\"arithmatex\">||(I_1||)</marimo-tex>, just like in your previous function. Also compute the \"backward\" optical flow, from <marimo-tex class=\"arithmatex\">||(I_1||)</marimo-tex> to <marimo-tex class=\"arithmatex\">||(I_0||)</marimo-tex> (you shouldn't need to re-implement your optical flow function to do this).</li>\n<li>Just like in <code>track_forward</code>, use the forward map to track the keypoints and compute <marimo-tex class=\"arithmatex\">||(P_1||)</marimo-tex>. Then, use the backward map to re-track the points in <marimo-tex class=\"arithmatex\">||(P_1||)</marimo-tex> back into frame <marimo-tex class=\"arithmatex\">||(I_0||)</marimo-tex>. We'll call this quantity <marimo-tex class=\"arithmatex\">||({P_0}'||)</marimo-tex>.</li>\n<li>Compute the error between <marimo-tex class=\"arithmatex\">||(P_0||)</marimo-tex> and <marimo-tex class=\"arithmatex\">||({P_0}'||)</marimo-tex> by taking the difference of the two matrices and computing the magnitude of each keypoint's error using <code>np.linalg.norm(..., axis=1)</code>. Then, remove all keypoints which have an error exceeding <code>threshold</code> (which is provided to you as an input to your function) *from both <marimo-tex class=\"arithmatex\">||(P_0||)</marimo-tex> and <marimo-tex class=\"arithmatex\">||(P_1||)</marimo-tex>.</li>\n<li>Repeat these steps to compute tracked keypoints for all of the frames. When you compute the error and threshold, you should remove all points which exceed the threshold <em>from all frames</em>. This means that as you add more frames, the number of tracked points will be non-increasing.</li>\n</ol>\n<span class=\"paragraph\">Just like before, you should return <marimo-tex class=\"arithmatex\">||(K||)</marimo-tex> numpy arrays, each with the same shape <marimo-tex class=\"arithmatex\">||((_, 2)||)</marimo-tex>.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "IaQp",
+      "code_hash": "a205f456b1cc3b59ee556f111540ab7f",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Your answer to Problem 5(d).</strong></span>\n<span class=\"paragraph\">You may either write your response here in LaTeX (if you are concerned your handwriting is illegible), or include your written response in the attached PDF. If your response is in the attached PDF, please indicate so here. You may (and should) clear all of the content in this cell.</span>\n<ol>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n<li>Your answer.</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "IWgg",
+      "code_hash": "e6ce9c6abe74476a5f1cd06cfb54e02d",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "fCoF",
+      "code_hash": "2eb236852fa179d654adbd42b69ab57d",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "LkGn",
+      "code_hash": "a456658d9ca6ecce8f1af9b71320ff31",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "zVRe",
+      "code_hash": "9691d48a2a2ee4306b60f8c040c3cf46",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "woaO",
+      "code_hash": "3c4b0033ff17cf95b66b5614bd707fe6",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"5e\">5(e)</h2>\n<span class=\"paragraph\">Answer the following written questions either on a sheet of paper (with attached PDF), or in the cell below.</span>\n<ol>\n<li>In your own words, explain why using the forward and backward optical flow estimates can help reduce tracking errors. Be sure to include a discussion of what kinds of errors this approach aims to solve.</li>\n<li>What type of errors might still be present? Describe a video sequence which might fail to be tracked correctly.</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "HnMC",
+      "code_hash": "965692d10d73d7dc9e7853beb51c5ed8",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Your answer to Problem 5(e).</strong></span>\n<span class=\"paragraph\">You may either write your response here in LaTeX (if you are concerned your handwriting is illegible), or include your written response in the attached PDF. If your response is in the attached PDF, please indicate so here. You may (and should) clear all of the content in this cell.</span>\n<ol>\n<li>Your answer.</li>\n<li>Your answer.</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "wadT",
+      "code_hash": "c487baee607983b4b909327446b54033",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"optional-your-own-video\">Optional - your own video</h2>\n<span class=\"paragraph\">This is strictly optional and will not be graded. Using the UI below, you can upload a video file of your own and see the keypoints tracked using your implementation.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "VCRE",
+      "code_hash": "284eb093358751572c25660e15d937eb",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "hgqU",
+      "code_hash": "cb19bbf4e2cd6a91a2eaa4d2c0010ea2",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "PSUk",
+      "code_hash": "2daeeb67ab5e64e028df43962536ca01",
+      "outputs": [],
+      "console": []
+    }
+  ]
+}
